@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 
 import sys
+from threading import Thread
 
 from bluepy.btle import Scanner
 
@@ -8,11 +9,9 @@ from radalertle import RadAlertLE
 from radalertlog import RadAlertConsoleLogger
 
 
-def spin(address):
-    logger = RadAlertConsoleLogger()
+def spin(address, logger):
     print("Connecting to {}".format(address), file=sys.stderr)
     device = RadAlertLE(address, logger.radalert_le_callback)
-    logger.start()
     device.spin() # Infinite loop
 
 def scan(seconds):
@@ -32,6 +31,10 @@ def connect_any():
     return addrs[0]
 
 def main():
+    logger = RadAlertConsoleLogger()
+    log_thread = Thread(target = logger.spin, daemon=True)
+    log_thread.start()
+
     if len(sys.argv) == 1:
         address = connect_any()
     else:

@@ -8,7 +8,7 @@ the callback to provide a basic console logging program.
 """
 
 import datetime
-from threading import Timer
+from time import sleep
 
 from radalertle import RadAlertLEStatus
 from radalertle import RadAlertLEQuery
@@ -33,6 +33,7 @@ class RadAlertConsoleLogger:
         :param minmax_samples: Number of samples used in the min/max values
         """
         self.conversion = None
+        self.running = False
 
         self.delay = delay
         self.average_samples = average_samples
@@ -100,18 +101,22 @@ class RadAlertConsoleLogger:
         )
         return "\t".join(table)
 
-    def start(self, init=True):
+    def spin(self):
         """
-        Begin logging to the console.
+        Spin our wheels periodically logging to the console.
 
-        TODO: Implement a stop method.
+        This should be executed in a seperate thread to ensure that
+        execution can still continue.
         """
-        if init == True:
+        if self.running == False:
             print(self.header())
-        line = self.__str__()
-        if len(line) > 0:
-            print(line)
-        Timer(self.delay, self.start, [False]).start()
+            self.running = True
+
+        while self.running:
+            line = self.__str__()
+            if len(line) > 0:
+                print(line)
+            sleep(self.delay)
 
     def radalert_le_callback(self, data):
         """
