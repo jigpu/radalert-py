@@ -1,6 +1,6 @@
 #!/bin/sh
 
-LOGFILE="${HOME}/tmp/radalert.log"
+LOGFILE="${HOME}/.cache/py-radalert-le.log"
 
 MAXIMUM_AGE_MINUTES=10
 

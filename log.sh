@@ -8,6 +8,6 @@
 # as an argument. Otherwise, the Python script will need root rights
 # to enable LE scanning...
 
-LOGFILE="${HOME}/tmp/radalert.log"
+LOGFILE="${HOME}/.cache/py-radalert-le.log"
 
 python3 -u ./main.py $@ | tee "$LOGFILE"
