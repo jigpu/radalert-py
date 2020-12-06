@@ -35,6 +35,8 @@ class RadAlertConsoleLogger:
         """
         self._running = False
         self._thread_event = threading.Event()
+        self._active = False
+
         self.conversion = None
 
         self.delay = delay
@@ -116,8 +118,9 @@ class RadAlertConsoleLogger:
 
         while self._running:
             line = self.__str__()
-            if len(line) > 0:
+            if len(line) > 0 and self._active:
                 print(line)
+                self._active = False
             self._thread_event.wait(timeout=self.delay)
 
     def stop(self):
@@ -137,6 +140,7 @@ class RadAlertConsoleLogger:
             self._on_query(data)
 
     def _on_data(self, data):
+        self._active = True
         cps = data.cps
 
         self.battery = data.battery_percent
