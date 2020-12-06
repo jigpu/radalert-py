@@ -13,6 +13,7 @@ state is good enough for most basic work :)
 import struct
 from enum import Enum
 from bluepy.btle import Peripheral
+from bluepy.btle import BTLEDisconnectError
 
 from ble import TransparentService
 
@@ -272,15 +273,19 @@ class RadAlertLE:
         the device is sending. Calling this method enters an infinite
         loop that keeps the connection alive and prints out status
         updates each time we get something new from the device.
+
+        If the device never replies back in time, or we discover that
+        the device has been disconnected, return. Otherwise, this is
+        essentially an infinite loop.
         """
-        iteration = 0
-        while True:
-            iteration += 1
-            if self._peripheral.waitForNotifications(10.0):
+        try:
+            iteration = 0
+            while self._peripheral.waitForNotifications(10.0):
+                iteration += 1
                 if iteration % 5 == 0:
                     self.trigger_query()
-                continue
-            break
+        except BTLEDisconnectError:
+            pass
 
     def _on_receive(self, bytestr):
         self._receive_buffer += bytestr
