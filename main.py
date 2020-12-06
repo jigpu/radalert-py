@@ -15,10 +15,9 @@ def spin(address):
     logger.start()
     device.spin() # Infinite loop
 
-def scan():
-    print("Scanning for Mon200 devices...", file=sys.stderr)
+def scan(seconds):
     results = []
-    entries = Scanner().scan(1.0)
+    entries = Scanner().scan(seconds)
     for entry in entries:
         name = entry.getValueText(9) # "Complete Local Name"
         if name is not None and "Mon200" in name:
@@ -26,9 +25,10 @@ def scan():
     return results
 
 def connect_any():
+    print("Scanning for Mon200 devices...", file=sys.stderr)
     addrs = []
     while len(addrs) == 0:
-        addrs = list(set(addrs) | set(scan()))
+        addrs = scan(3)
     return addrs[0]
 
 def main():
