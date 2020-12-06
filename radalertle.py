@@ -247,13 +247,16 @@ class RadAlertLE:
         self._command_buffer = []
         self._receive_buffer = b''
         self.packet_callback = packet_callback
+        self._peripheral = None
+
         self._peripheral = Peripheral(address)
         #info_service = DeviceInfoService(self._peripheral)
         #print(info_service.get_information())
         self._service = TransparentService(self._peripheral, self._on_receive)
 
     def __del__(self):
-        self._peripheral.disconnect()
+        if self._peripheral is not None:
+            self._peripheral.disconnect()
 
     def trigger_query(self):
         """

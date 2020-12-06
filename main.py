@@ -4,6 +4,7 @@ import sys
 from threading import Thread
 
 from bluepy.btle import Scanner
+from bluepy.btle import BTLEDisconnectError
 
 from radalertle import RadAlertLE
 from radalertlog import RadAlertConsoleLogger
@@ -11,7 +12,10 @@ from radalertlog import RadAlertConsoleLogger
 
 def spin(address, logger):
     print("Connecting to {}".format(address), file=sys.stderr)
-    device = RadAlertLE(address, logger.radalert_le_callback)
+    try:
+        device = RadAlertLE(address, logger.radalert_le_callback)
+    except BTLEDisconnectError:
+        return
     device.spin() # Infinite loop
 
 def scan(seconds):
