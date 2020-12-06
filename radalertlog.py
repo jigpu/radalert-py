@@ -7,8 +7,8 @@ This module provides a basic logging class that can be hooked up to
 the callback to provide a basic console logging program.
 """
 
-import datetime
 import threading
+from datetime import datetime
 from time import sleep
 
 from radalertle import RadAlertLEStatus
@@ -65,7 +65,7 @@ class RadAlertConsoleLogger:
             minimum = self.minimum.value * 60
 
             table = (
-                f"{datetime.datetime.now()}",
+                f"{datetime.now().strftime('%Y-%m-%d %H:%M:%S')}",
                 f"{self.battery}%",
                 f"{self.conversion}",
                 f"{actual}",
