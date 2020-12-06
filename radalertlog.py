@@ -8,6 +8,7 @@ the callback to provide a basic console logging program.
 """
 
 import datetime
+import threading
 from time import sleep
 
 from radalertle import RadAlertLEStatus
@@ -32,8 +33,9 @@ class RadAlertConsoleLogger:
         :param average_samples: Number of samples used in the short/medium/long averages
         :param minmax_samples: Number of samples used in the min/max values
         """
+        self._running = False
+        self._thread_event = threading.Event()
         self.conversion = None
-        self.running = False
 
         self.delay = delay
         self.average_samples = average_samples
@@ -60,11 +62,11 @@ class RadAlertConsoleLogger:
                 f"{datetime.datetime.now()}",
                 f"{self.battery}%",
                 f"{self.conversion}",
-                f"{avg_short : .2f}",
-                f"{avg_medium :.2f}",
-                f"{avg_long :.2f}",
-                f"{maximum :.2f}",
-                f"{minimum :.2f}",
+                f"{avg_short:.2f}",
+                f"{avg_medium:.2f}",
+                f"{avg_long:.2f}",
+                f"{maximum:.2f}",
+                f"{minimum:.2f}",
             )
             return "\t".join(table)
         except:
@@ -108,15 +110,19 @@ class RadAlertConsoleLogger:
         This should be executed in a seperate thread to ensure that
         execution can still continue.
         """
-        if self.running == False:
+        if self._running == False:
             print(self.header())
-            self.running = True
+            self._running = True
 
-        while self.running:
+        while self._running:
             line = self.__str__()
             if len(line) > 0:
                 print(line)
-            sleep(self.delay)
+            self._thread_event.wait(timeout=self.delay)
+
+    def stop(self):
+        self._running = False
+        self._thread_event.set()
 
     def radalert_le_callback(self, data):
         """
