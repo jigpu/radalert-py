@@ -2,6 +2,8 @@
 
 LOGFILE="${HOME}/tmp/radalert.log"
 
+MAXIMUM_AGE_MINUTES=10
+
 GMC_ENABLE=0
 GMC_ACCOUNT_ID=
 GMC_GEIGER_ID=
@@ -13,7 +15,7 @@ RADMON_PASSWORD=
 if ! test -f "${LOGFILE}"; then
 	echo "Log file could not be found"
 	exit 1
-elif ! find "${LOGFILE}" -mmin -3 > /dev/null; then
+elif ! find "${LOGFILE}" -mmin -${MAXIMUM_AGE_MINUTES} > /dev/null; then
 	echo "Log file is stale"
 	exit 1
 fi
