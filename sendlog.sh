@@ -1,16 +1,14 @@
 #!/bin/sh
 
 LOGFILE="${HOME}/tmp/radalert.log"
-ACCOUNT_ID=
-GEIGER_ID=
 
-if test -z "${ACCOUNT_ID}"; then
-	echo "Account ID must be set"
-	exit 1
-elif test -z "${GEIGER_ID}"; then
-	echo "Gieger counter ID must be set"
-	exit 1
-fi
+GMC_ENABLE=0
+GMC_ACCOUNT_ID=
+GMC_GEIGER_ID=
+
+RADMON_ENABLE=0
+RADMON_USERNAME=
+RADMON_PASSWORD=
 
 if ! test -f "${LOGFILE}"; then
 	echo "Log file could not be found"
@@ -29,10 +27,42 @@ elif grep "None" <<< "$LOGLINE"; then
 	exit 1
 fi
 
-
-
 CPM=$(awk -F'\t' '{print $5}' <<< "$LOGLINE")
 ACPM=$(awk -F'\t' '{print $6}' <<< "$LOGLINE")
 USV=$(awk -F'\t' '{print $5/$3*10}' <<< "$LOGLINE")
 
-curl -s "http://www.GMCmap.com/log2.asp?AID=${ACCOUNT_ID}&GID=${GEIGER_ID}&CPM=${CPM}&ACPM=${ACPM}&uSV=${USV}" > /dev/null
+
+ERR=0
+if test "${GMC_ENABLE}" -eq 1; then
+	if test -z "${GMC_ACCOUNT_ID}"; then
+		echo "GMC: Account ID must be set" >&2
+		ERR=1
+	fi
+	if test -z "${GMC_GEIGER_ID}"; then
+		echo "GMC: Gieger counter ID must be set" >&2
+		ERR=1
+	fi
+fi
+if test "${RADMON_ENABLE}" -eq 1; then
+	if test -z "${RADMON_USERNAME}"; then
+		echo "Radmon: Username must be set" >&2
+		ERR=1
+	fi
+	if test -z "${RADMON_PASSWORD}"; then
+		echo "Radmon: Password must be set" >&2
+		ERR=1
+	fi
+fi
+
+if test "${ERR}" -ne 0; then
+	exit ${ERR}
+fi
+
+if test "${GMC_ENABLE}" -eq 1; then
+	URL="http://www.GMCmap.com/log2.asp?AID=${GMC_ACCOUNT_ID}&GID=${GMC_GEIGER_ID}&CPM=${CPM}&ACPM=${ACPM}&uSV=${USV}"
+	curl -s "${URL}" > /dev/null || echo "GMC: Failed to send" >&2
+fi
+if test "${RADMON_ENABLE}" -eq 1; then
+	URL="http://radmon.org/radmon.php?function=submit&user=${RADMON_USERNAME}&password=${RADMON_PASSWORD}&value=${CPM}&unit=CPM"
+	curl -s "${URL}" > /dev/null || echo "Radmon: Failed to send" >&2
+fi

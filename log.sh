@@ -1,11 +1,12 @@
 #!/bin/sh
 
-# Spins up the program for logging to a file. This file can also be
-# used to send data to the GMC.MAP service with the help of the
-# sendlog.sh script
+# Spins up the program for logging to a file. The log can be analyzed
+# locally or used by something like sendlog.sh to upload data to a
+# monitoring service.
 #
 # You will probably want to pass the MAC address of the geiger counter
-# as an argument so that this doesn't have to run as root...
+# as an argument. Otherwise, the Python script will need root rights
+# to enable LE scanning...
 
 LOGFILE="${HOME}/tmp/radalert.log"
 
