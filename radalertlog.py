@@ -25,7 +25,7 @@ class RadAlertConsoleLogger:
     the console.
     """
 
-    def __init__(self, delay=30, average_samples=(300,43200,7776000), minmax_samples=300):
+    def __init__(self, delay=30, actual_samples=60, average_samples=(300,43200,7776000), minmax_samples=300):
         """
         Create a new logger with the given properties.
 
@@ -40,6 +40,8 @@ class RadAlertConsoleLogger:
         self.conversion = None
 
         self.delay = delay
+        self.actual_samples = actual_samples
+        self.actuals = FIRFilter(actual_samples, sum)
         self.average_samples = average_samples
         self.averages = (
             FIRFilter(average_samples[0]),
@@ -53,6 +55,8 @@ class RadAlertConsoleLogger:
 
     def __str__(self):
         try:
+            actual = self.actuals.value
+
             avg_short  = self.averages[0].value * 60
             avg_medium = self.averages[1].value * 60
             avg_long   = self.averages[2].value * 60
@@ -64,6 +68,7 @@ class RadAlertConsoleLogger:
                 f"{datetime.datetime.now()}",
                 f"{self.battery}%",
                 f"{self.conversion}",
+                f"{actual}",
                 f"{avg_short:.2f}",
                 f"{avg_medium:.2f}",
                 f"{avg_long:.2f}",
@@ -87,6 +92,7 @@ class RadAlertConsoleLogger:
             time /= 24
             return (time, "d")
 
+        ts_actual = timespan(self.actual_samples)
         ts_short = timespan(self.average_samples[0])
         ts_medium = timespan(self.average_samples[1])
         ts_long = timespan(self.average_samples[2])
@@ -96,6 +102,7 @@ class RadAlertConsoleLogger:
             f"time",
             f"battery",
             f"cpm/(mR/h)",
+            f"{ts_actual[0]}{ts_actual[1]}-count",
             f"{ts_short[0]}{ts_short[1]}-avg-cpm",
             f"{ts_medium[0]}{ts_medium[1]}-avg-cpm",
             f"{ts_long[0]}{ts_long[1]}-avg-cpm",
@@ -143,6 +150,9 @@ class RadAlertConsoleLogger:
         cps = data.cps
 
         self.battery = data.battery_percent
+
+        # Do not initalize actual count with any kind of average
+        self.actuals.iterate(cps)
 
         # Initialize averaging filters to the device average
         if self.averages[0].value is None:

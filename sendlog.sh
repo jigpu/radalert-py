@@ -31,8 +31,8 @@ fi
 
 
 
-CPM=$(awk -F'\t' '{print $4}' <<< "$LOGLINE")
-ACPM=$(awk -F'\t' '{print $5}' <<< "$LOGLINE")
-USV=$(awk -F'\t' '{print $4/$3*10}' <<< "$LOGLINE")
+CPM=$(awk -F'\t' '{print $5}' <<< "$LOGLINE")
+ACPM=$(awk -F'\t' '{print $6}' <<< "$LOGLINE")
+USV=$(awk -F'\t' '{print $5/$3*10}' <<< "$LOGLINE")
 
 curl -s "http://www.GMCmap.com/log2.asp?AID=${ACCOUNT_ID}&GID=${GEIGER_ID}&CPM=${CPM}&ACPM=${ACPM}&uSV=${USV}" > /dev/null
