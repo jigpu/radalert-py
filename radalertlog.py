@@ -76,17 +76,16 @@ class RadAlertConsoleLogger:
 
     def header(self):
         def timespan(time):
-            unit = "s"
-            if time > 60:
-                time /= 60
-                unit = "m"
-            if time > 60:
-                time /= 60
-                unit = "h"
-            if time > 24:
-                time /= 24
-                unit = "d"
-            return (time,unit)
+            if time <= 60:
+                return (time, "s")
+            time /= 60
+            if time <= 60:
+                return (time, "m")
+            time /= 60
+            if time <= 24:
+                return (time, "h")
+            time /= 24
+            return (time, "d")
 
         ts_short = timespan(self.average_samples[0])
         ts_medium = timespan(self.average_samples[1])
