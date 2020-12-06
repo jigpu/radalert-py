@@ -9,14 +9,14 @@ from radalertlog import RadAlertConsoleLogger
 
 
 def spin(address):
-    print("Connecting to {}".format(address))
     logger = RadAlertConsoleLogger()
+    print("Connecting to {}".format(address), file=sys.stderr)
     device = RadAlertLE(address, logger.radalert_le_callback)
     logger.start()
     device.spin() # Infinite loop
 
 def scan():
-    print("Scanning for Mon200 devices...")
+    print("Scanning for Mon200 devices...", file=sys.stderr)
     results = []
     entries = Scanner().scan(1.0)
     for entry in entries:
