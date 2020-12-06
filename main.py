@@ -35,11 +35,13 @@ def main():
     log_thread = Thread(target = logger.spin, daemon=True)
     log_thread.start()
 
-    if len(sys.argv) == 1:
-        address = connect_any()
-    else:
-        address = sys.argv[1]
-    spin(address) # Infinite loop
+    # Keep attempting to reconnect if anything goes wrong
+    while True:
+        if len(sys.argv) == 1:
+            address = connect_any()
+        else:
+            address = sys.argv[1]
+        spin(address, logger)
 
 if __name__=="__main__":        
     main()
