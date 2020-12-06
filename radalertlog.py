@@ -44,6 +44,7 @@ class RadAlertConsoleLogger:
         self.minmax_samples = minmax_samples
         self.maximum = FIRFilter(minmax_samples, max)
         self.minimum = FIRFilter(minmax_samples, min)
+        self.battery = 0
 
     def __str__(self):
         try:
@@ -56,6 +57,7 @@ class RadAlertConsoleLogger:
 
             table = (
                 f"{datetime.datetime.now()}",
+                f"{self.battery}%",
                 f"{self.conversion}",
                 f"{avg_short : .2f}",
                 f"{avg_medium :.2f}",
@@ -88,6 +90,7 @@ class RadAlertConsoleLogger:
 
         table = (
             f"time",
+            f"battery",
             f"cpm/(mR/h)",
             f"{ts_short[0]}{ts_short[1]}-avg-cpm",
             f"{ts_medium[0]}{ts_medium[1]}-avg-cpm",
@@ -124,6 +127,8 @@ class RadAlertConsoleLogger:
 
     def _on_data(self, data):
         cps = data.cps
+
+        self.battery = data.battery_percent
 
         # Initialize averaging filters to the device average
         if self.averages[0].value is None:
