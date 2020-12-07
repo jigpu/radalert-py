@@ -1,5 +1,26 @@
 #!/usr/bin/env python3
 
+"""
+Example of a simple logging program which uses the radalert API.
+
+This program connects to the first Radiation Alert Monitor200 device
+that it can find over BLE. Once connected, it will begin gathering
+events and performing statistics. Logs data will be printed out
+periodically as tab-separated values. If the connection is interrupted
+the program will remain running and try to connect again.
+
+This module focuses on getting the connection set up (and resumed
+if it fails). The heavy-lifting of the logging / statistics is
+handled inside the logger module that lives alongside this example.
+
+If you run this example without any arguments, it will start a BLE
+scan for devices with "Mon200" in their name. This may require
+root permissions. Alternatively, you can provide the address of a
+specific device to connect to as a command-line argument and we
+will attempt to connect to that device directly without needing
+root rights.
+"""
+
 import sys
 from threading import Thread
 
