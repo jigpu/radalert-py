@@ -7,8 +7,12 @@ This module provides a basic logging class that can be hooked up to
 the callback to provide a basic console logging program.
 """
 
+import sys
 import threading
+import urllib.request
 from datetime import datetime
+from string import Template
+
 
 from radalert.ble import RadAlertLEStatus
 from radalert.ble import RadAlertLEQuery
@@ -111,6 +115,129 @@ class ConsoleLogger:
             self._thread_event.wait(timeout=self.delay)
 
     def stop(self):
+        """Stop execution of the spin function."""
+        self._running = False
+        self._thread_event.set()
+
+
+class GmcmapLogger:
+    """
+    Simple class to take care of logging data to the GMC.MAP service.
+    """
+
+    _URL_TEMPLATE=Template("http://www.GMCmap.com/log2.asp?AID=${GMC_ACCOUNT_ID}&GID=${GMC_GEIGER_ID}&CPM=${CPM}&ACPM=${ACPM}&uSV=${USV}")
+
+    def __init__(self, backend, account_id, geiger_id, delay=180):
+        self.backend = backend
+        self.account_id = account_id
+        self.geiger_id = geiger_id
+        self.delay = delay
+
+        self._running = False
+        self._thread_event = threading.Event()
+
+    def send_update(self):
+        try:
+            update_delay = datetime.now() - self.backend.last_update
+            if update_delay.total_seconds() > self.delay:
+                return
+
+            avg_short = self.backend.averages[0].value * 60
+            avg_long = self.backend.averages[2].value * 60
+            usv = avg_short / self.backend.conversion * 10
+
+            self.send_values(avg_short, avg_long, usv)
+        except:
+            print("Unable to send values to gmc server", file=sys.stderr)
+
+    def send_values(self, cpm, acpm, usv):
+        """
+        Send the log data to the service.
+        """
+        url=GmcmapLogger._URL_TEMPLATE.substitute(
+            GMC_ACCOUNT_ID=self.account_id,
+            GMC_GEIGER_ID=self.geiger_id,
+            CPM=f'{cpm:.2f}',
+            ACPM=f'{acpm:.2f}',
+            USV=f'{usv:.5f}'
+        )
+        urllib.request.urlopen(url).read()
+
+    def spin(self):
+        """
+        Spin our wheels periodically logging to the server.
+
+        This should be executed in a seperate thread to ensure that
+        execution can still continue.
+        """
+        if not self._running:
+            self._running = True
+
+        while self._running:
+            self.send_update()
+            self._thread_event.wait(timeout=self.delay)
+
+    def stop(self):
+        """Stop execution of the spin function."""
+        self._running = False
+        self._thread_event.set()
+
+
+class RadmonLogger:
+    """
+    Simple class to take care of logging data to the Radmon service.
+    """
+
+    _URL_TEMPLATE=Template("http://radmon.org/radmon.php?function=submit&user=${RADMON_USERNAME}&password=${RADMON_PASSWORD}&value=${CPM}&unit=CPM")
+
+    def __init__(self, backend, account_id, geiger_id, delay=180):
+        self.backend = backend
+        self.account_id = account_id
+        self.geiger_id = geiger_id
+        self.delay = delay
+
+        self._running = False
+        self._thread_event = threading.Event()
+
+    def send_update(self):
+        try:
+            update_delay = datetime.now() - self.backend.last_update
+            if update_delay.total_seconds() > self.delay:
+                return
+
+            avg_short = self.backend.averages[0].value * 60
+
+            self.send_values(avg_short)
+        except:
+            print("Unable to send values to radmon server", file=sys.stderr)
+
+    def send_values(self, cpm):
+        """
+        Send the log data to the service.
+        """
+        url=RadmonLogger._URL_TEMPLATE.substitute(
+            RADMON_USERNAME=self.account_id,
+            RADMON_PASSWORD=self.geiger_id,
+            CPM=f'{cpm:.2f}',
+        )
+        urllib.request.urlopen(url).read()
+
+    def spin(self):
+        """
+        Spin our wheels periodically logging to the server.
+
+        This should be executed in a seperate thread to ensure that
+        execution can still continue.
+        """
+        if not self._running:
+            self._running = True
+
+        while self._running:
+            self.send_update()
+            self._thread_event.wait(timeout=self.delay)
+
+    def stop(self):
+        """Stop execution of the spin function."""
         self._running = False
         self._thread_event.set()
 

@@ -26,6 +26,8 @@ from threading import Thread
 
 from logger import ConsoleLogger
 from logger import LogBackend
+from logger import GmcmapLogger
+from logger import RadmonLogger
 
 from bluepy.btle import Scanner
 from bluepy.btle import BTLEDisconnectError
@@ -98,6 +100,16 @@ def main():
     console_log = ConsoleLogger(backend)
     console_thread = Thread(target = console_log.spin, daemon=True)
     console_thread.start()
+
+    # Set up logging to the GMC.MAP service. Be sure to fill in the IDs!
+    #gmc_log = GmcmapLogger(backend, "--ID--", "--ID--")
+    #gmc_thread = Thread(target = gmc_log.spin, daemon=True)
+    #gmc_thread.start()
+
+    # Set up logging to the Radmon service. Be sure to fill in the user/pass!
+    #radmon_log = RadmonLogger(backend, "--USER--", "--PASSWORD--")
+    #radmon_thread = Thread(target = radmon_log.spin, daemon=True)
+    #radmon_thread.start()
 
     # Keep attempting to reconnect if anything goes wrong
     while True:
