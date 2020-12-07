@@ -24,7 +24,8 @@ root rights.
 import sys
 from threading import Thread
 
-from logger import RadAlertConsoleLogger
+from logger import ConsoleLogger
+from logger import LogBackend
 
 from bluepy.btle import Scanner
 from bluepy.btle import BTLEDisconnectError
@@ -32,7 +33,7 @@ from bluepy.btle import BTLEDisconnectError
 from radalert.ble import RadAlertLE
 
 
-def spin(address, logger):
+def spin(address, backend):
     """
     Connect to the given address and begin spinning for data.
 
@@ -45,7 +46,7 @@ def spin(address, logger):
     """
     print("Connecting to {}".format(address), file=sys.stderr)
     try:
-        device = RadAlertLE(address, logger.radalert_le_callback)
+        device = RadAlertLE(address, backend.radalert_le_callback)
     except BTLEDisconnectError:
         return
     device.spin() # Infinite loop
@@ -91,9 +92,11 @@ def main():
     An address may be explicitly provided on the command-line, or
     if none is given the program will scan for devices.
     """
-    logger = RadAlertConsoleLogger()
-    log_thread = Thread(target = logger.spin, daemon=True)
-    log_thread.start()
+    backend = LogBackend()
+
+    console_log = ConsoleLogger(backend)
+    console_thread = Thread(target = console_log.spin, daemon=True)
+    console_thread.start()
 
     # Keep attempting to reconnect if anything goes wrong
     while True:
@@ -101,7 +104,7 @@ def main():
             address = find_any()
         else:
             address = sys.argv[1]
-        spin(address, logger)
+        spin(address, backend)
 
 if __name__=="__main__":
     main()

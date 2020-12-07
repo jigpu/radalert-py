@@ -1,5 +1,5 @@
 """
-A console logger for use with the RadAlertLE class.
+A set of logging classes for use with the RadAlertLE class.
 
 The RadAlertLE class requires you to give it a callback function that
 will be called whenever new data is available from the geiger counter.
@@ -16,57 +16,39 @@ from radalert.util.filter import FIRFilter
 from radalert.util.filter import IIRFilter
 
 
-class RadAlertConsoleLogger:
+class ConsoleLogger:
     """
     Simple console-logging class for the Radiation Alert devices.
 
-    Keeps track of a few key properties and periodically prints them to
-    the console.
+    Periodically prints the properties tracked by the backend to the
+    console.
     """
+    def __init__(self, backend, delay=30):
+        self.backend = backend
+        self.delay = delay
 
-    def __init__(self, delay=30, actual_samples=60, average_samples=(300,43200,7776000), minmax_samples=300):
-        """
-        Create a new logger with the given properties.
-
-        :param int delay: Number of seconds to wait between printed updates
-        :param average_samples: Number of samples used in the short/medium/long averages
-        :param minmax_samples: Number of samples used in the min/max values
-        """
         self._running = False
         self._thread_event = threading.Event()
-        self._active = False
-
-        self.conversion = None
-
-        self.delay = delay
-        self.actual_samples = actual_samples
-        self.actuals = FIRFilter(actual_samples, sum)
-        self.average_samples = average_samples
-        self.averages = (
-            FIRFilter(average_samples[0]),
-            IIRFilter.create_from_time_constant(average_samples[1]),
-            IIRFilter.create_from_time_constant(average_samples[2]),
-        )
-        self.minmax_samples = minmax_samples
-        self.maximum = FIRFilter(minmax_samples, max)
-        self.minimum = FIRFilter(minmax_samples, min)
-        self.battery = 0
 
     def __str__(self):
         try:
-            actual = self.actuals.value
+            update_delay = datetime.now() - self.backend.last_update
+            if update_delay.total_seconds() > self.delay:
+                return ""
 
-            avg_short  = self.averages[0].value * 60
-            avg_medium = self.averages[1].value * 60
-            avg_long   = self.averages[2].value * 60
+            actual = self.backend.actuals.value
 
-            maximum = self.maximum.value * 60
-            minimum = self.minimum.value * 60
+            avg_short  = self.backend.averages[0].value * 60
+            avg_medium = self.backend.averages[1].value * 60
+            avg_long   = self.backend.averages[2].value * 60
+
+            maximum = self.backend.maximum.value * 60
+            minimum = self.backend.minimum.value * 60
 
             table = (
                 f"{datetime.now().strftime('%Y-%m-%d %H:%M:%S')}",
-                f"{self.battery}%",
-                f"{self.conversion}",
+                f"{self.backend.battery}%",
+                f"{self.backend.conversion}",
                 f"{actual}",
                 f"{avg_short:.2f}",
                 f"{avg_medium:.2f}",
@@ -74,6 +56,7 @@ class RadAlertConsoleLogger:
                 f"{maximum:.2f}",
                 f"{minimum:.2f}",
             )
+
             return "\t".join(table)
         except:
             return ""
@@ -91,11 +74,11 @@ class RadAlertConsoleLogger:
             time /= 24
             return (time, "d")
 
-        ts_actual = timespan(self.actual_samples)
-        ts_short = timespan(self.average_samples[0])
-        ts_medium = timespan(self.average_samples[1])
-        ts_long = timespan(self.average_samples[2])
-        ts_minmax = timespan(self.minmax_samples)
+        ts_actual = timespan(self.backend.actual_samples)
+        ts_short = timespan(self.backend.average_samples[0])
+        ts_medium = timespan(self.backend.average_samples[1])
+        ts_long = timespan(self.backend.average_samples[2])
+        ts_minmax = timespan(self.backend.minmax_samples)
 
         table = (
             f"time",
@@ -123,14 +106,42 @@ class RadAlertConsoleLogger:
 
         while self._running:
             line = self.__str__()
-            if len(line) > 0 and self._active:
+            if len(line) > 0:
                 print(line)
-                self._active = False
             self._thread_event.wait(timeout=self.delay)
 
     def stop(self):
         self._running = False
         self._thread_event.set()
+
+
+class LogBackend:
+    """
+    Backend class to interface with the radalert package.
+
+    Keeps track of various statistics and device state for loggers.
+    """
+
+    def __init__(self, actual_samples=60, average_samples=(300,43200,7776000), minmax_samples=300):
+        """
+        Create a new logger with the given properties.
+        """
+        self.last_update = None
+
+        self.conversion = None
+        self.battery = 0
+
+        self.actual_samples = actual_samples
+        self.actuals = FIRFilter(actual_samples, sum)
+        self.average_samples = average_samples
+        self.averages = (
+            FIRFilter(average_samples[0]),
+            IIRFilter.create_from_time_constant(average_samples[1]),
+            IIRFilter.create_from_time_constant(average_samples[2]),
+        )
+        self.minmax_samples = minmax_samples
+        self.maximum = FIRFilter(minmax_samples, max)
+        self.minimum = FIRFilter(minmax_samples, min)
 
     def radalert_le_callback(self, data):
         """
@@ -145,7 +156,7 @@ class RadAlertConsoleLogger:
             self._on_query(data)
 
     def _on_data(self, data):
-        self._active = True
+        self.last_update=datetime.now()
         cps = data.cps
 
         self.battery = data.battery_percent
