@@ -9,7 +9,6 @@ the callback to provide a basic console logging program.
 
 import threading
 from datetime import datetime
-from time import sleep
 
 from radalert.ble import RadAlertLEStatus
 from radalert.ble import RadAlertLEQuery
@@ -118,7 +117,7 @@ class RadAlertConsoleLogger:
         This should be executed in a seperate thread to ensure that
         execution can still continue.
         """
-        if self._running == False:
+        if not self._running:
             print(self.header())
             self._running = True
 

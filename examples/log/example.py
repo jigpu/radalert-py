@@ -24,15 +24,25 @@ root rights.
 import sys
 from threading import Thread
 
+from logger import RadAlertConsoleLogger
+
 from bluepy.btle import Scanner
 from bluepy.btle import BTLEDisconnectError
 
 from radalert.ble import RadAlertLE
 
-from logger import RadAlertConsoleLogger
-
 
 def spin(address, logger):
+    """
+    Connect to the given address and begin spinning for data.
+
+    This method creates a device with the given address, setting
+    up a connection to it. If all goes well, we then call the
+    device's spin method to continuously get events.
+
+    This function only returns in the case of an error or
+    disconnection.
+    """
     print("Connecting to {}".format(address), file=sys.stderr)
     try:
         device = RadAlertLE(address, logger.radalert_le_callback)
@@ -41,6 +51,13 @@ def spin(address, logger):
     device.spin() # Infinite loop
 
 def scan(seconds):
+    """
+    Scan for a Monitor200 geiger counter.
+
+    Starts a BLE scan for devices with "Mon200" in their name. A list
+    of all matching device addresses is returned. This list may be
+    empty if none were found.
+    """
     results = []
     entries = Scanner().scan(seconds)
     for entry in entries:
@@ -49,7 +66,14 @@ def scan(seconds):
             results.append(entry.addr)
     return results
 
-def connect_any():
+def find_any():
+    """
+    Try to connect to any Monitor200 geiger counter.
+
+    Repeatedly scans for the presence of any device and returns its
+    address once found. This loop does not exit until a device is
+    found.
+    """
     print("Scanning for Mon200 devices...", file=sys.stderr)
     addrs = []
     while len(addrs) == 0:
@@ -57,6 +81,16 @@ def connect_any():
     return addrs[0]
 
 def main():
+    """
+    Start the logging example.
+
+    Set up the console logger and then find a device to gather
+    data from. If anything goes wrong, try to re-estable a
+    connection to let the log continue.
+
+    An address may be explicitly provided on the command-line, or
+    if none is given the program will scan for devices.
+    """
     logger = RadAlertConsoleLogger()
     log_thread = Thread(target = logger.spin, daemon=True)
     log_thread.start()
@@ -64,7 +98,7 @@ def main():
     # Keep attempting to reconnect if anything goes wrong
     while True:
         if len(sys.argv) == 1:
-            address = connect_any()
+            address = find_any()
         else:
             address = sys.argv[1]
         spin(address, logger)
