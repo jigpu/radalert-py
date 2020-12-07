@@ -6,8 +6,9 @@ from threading import Thread
 from bluepy.btle import Scanner
 from bluepy.btle import BTLEDisconnectError
 
-from radalertle import RadAlertLE
-from radalertlog import RadAlertConsoleLogger
+from radalert.ble import RadAlertLE
+
+from logger import RadAlertConsoleLogger
 
 
 def spin(address, logger):
@@ -47,5 +48,5 @@ def main():
             address = sys.argv[1]
         spin(address, logger)
 
-if __name__=="__main__":        
+if __name__=="__main__":
     main()

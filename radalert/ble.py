@@ -15,7 +15,7 @@ from enum import Enum
 from bluepy.btle import Peripheral
 from bluepy.btle import BTLEDisconnectError
 
-from ble import TransparentService
+from radalert.util.ble import TransparentService
 
 class RadAlertLEStatus:
     """

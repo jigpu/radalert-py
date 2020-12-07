@@ -11,10 +11,10 @@ import threading
 from datetime import datetime
 from time import sleep
 
-from radalertle import RadAlertLEStatus
-from radalertle import RadAlertLEQuery
-from filter import FIRFilter
-from filter import IIRFilter
+from radalert.ble import RadAlertLEStatus
+from radalert.ble import RadAlertLEQuery
+from radalert.util.filter import FIRFilter
+from radalert.util.filter import IIRFilter
 
 
 class RadAlertConsoleLogger:
