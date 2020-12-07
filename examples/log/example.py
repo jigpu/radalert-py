@@ -29,6 +29,7 @@ from logger import LogBackend
 
 from bluepy.btle import Scanner
 from bluepy.btle import BTLEDisconnectError
+from bluepy.btle import BTLEException
 
 from radalert.ble import RadAlertLE
 
@@ -47,7 +48,7 @@ def spin(address, backend):
     print("Connecting to {}".format(address), file=sys.stderr)
     try:
         device = RadAlertLE(address, backend.radalert_le_callback)
-    except BTLEDisconnectError:
+    except (BTLEDisconnectError, BTLEException):
         return
     device.spin() # Infinite loop
 
