@@ -19,7 +19,7 @@ def mean_geometric(values):
     if len(values) == 0:
         return None
     mean = values[0]
-    for i in range(1,len(values)):
+    for i in range(1, len(values)):
         mean = math.pow(values[i] * math.pow(mean, i-1), 1/i)
     return mean
 

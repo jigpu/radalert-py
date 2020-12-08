@@ -17,6 +17,7 @@ from bluepy.btle import BTLEDisconnectError
 
 from radalert.util.ble import TransparentService
 
+
 class RadAlertLEStatus:
     """
     Representation of a status packet from a RadAlertLE device.
@@ -25,12 +26,12 @@ class RadAlertLEStatus:
     """
 
     _MODE_DISPLAY_INFO = {
-        0:  ("cpm",    lambda x: x),      # convert data from CPM
-        1:  ("cps",    lambda x: x/10),   # convert data from centi-CPS
-        2:  ("µR/h",   lambda x: x),      # convert data from uR/h
-        3:  ("µSv/h",  lambda x: x/1000), # convert data from nSv/h
-        20: ("counts", lambda x: x),      # convert data from counts
-        23: ("mR/h",   lambda x: x/1000), # convert data from uR/h
+        0:  ("cpm",    lambda x: x),       # convert data from CPM
+        1:  ("cps",    lambda x: x/10),    # convert data from centi-CPS
+        2:  ("µR/h",   lambda x: x),       # convert data from uR/h
+        3:  ("µSv/h",  lambda x: x/1000),  # convert data from nSv/h
+        20: ("counts", lambda x: x),       # convert data from counts
+        23: ("mR/h",   lambda x: x/1000),  # convert data from uR/h
     }
 
     class AlarmState(Enum):
