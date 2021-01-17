@@ -22,6 +22,7 @@ root rights.
 """
 
 import sys
+import time
 from threading import Thread
 
 from logger import ConsoleLogger
@@ -118,6 +119,7 @@ def main():
         else:
             address = sys.argv[1]
         spin(address, backend)
+        time.sleep(3)
 
 if __name__=="__main__":
     main()
