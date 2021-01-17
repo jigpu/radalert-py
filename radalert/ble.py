@@ -182,7 +182,14 @@ class RadAlertLEQuery:
         return self._data["conv"]
 
     @property
-    def unknown(self) -> Tuple[int, int, int, int]:
+    def deadtime(self) -> float:
+        """
+        Get the tube deadtime in seconds.
+        """
+        return 1/self._data["dead"]
+
+    @property
+    def unknown(self) -> Tuple[int, int, int]:
         """
         Get the unknown data contained within the packet.
 
@@ -192,7 +199,6 @@ class RadAlertLEQuery:
         """
         return (self._data["unk1"],
                 self._data["unk2"],
-                self._data["unk3"],
                 self._data["unk4"])
 
     @staticmethod
@@ -207,11 +213,11 @@ class RadAlertLEQuery:
           * unk1:  Unknown value; always set to 0xFFFFFFFF on my unit
           * alarm: Current alarm value in CPM (even if disabled)
           * unk2:  Unknown value; always set to 0x0000 on my unit
-          * unk3:  Unknown value; always set to 0x2B67 (1111 decimal) on my unit
+          * dead:  Deadtime fraction; 1/dead == tube deadtime in seconds
           * conv:  Calibration conversion factor in CPM/(mR/h)
           * unk4:  Unknown value; always set to 0xFFFFFFFF on my unit
         """
-        keys = ("unk1", "alarm", "unk2", "unk3", "conv", "unk4")
+        keys = ("unk1", "alarm", "unk2", "dead", "conv", "unk4")
         values = struct.unpack("<I4HI", bytestr)
         return dict(zip(keys, values))
 
