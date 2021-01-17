@@ -13,9 +13,8 @@ state is good enough for most basic work :)
 import sys
 import struct
 from enum import Enum
-from typing import Callable, Dict, List, Optional, Tuple, Union
+from typing import Callable, Dict, List, NoReturn, Optional, Tuple, Union
 from bluepy.btle import Peripheral
-from bluepy.btle import BTLEDisconnectError
 
 from radalert.util.ble import TransparentService
 
@@ -324,7 +323,7 @@ class RadAlertLE:
         """
         self._command_buffer.append(self._COMMAND_STRING["query"])
 
-    def spin(self) -> None:
+    def spin(self) -> NoReturn:
         """
         Spin our wheels reading data from the device.
 
@@ -333,18 +332,17 @@ class RadAlertLE:
         loop that keeps the connection alive and prints out status
         updates each time we get something new from the device.
 
-        If the device never replies back in time, or we discover that
-        the device has been disconnected, return. Otherwise, this is
-        essentially an infinite loop.
+        The only way we leave this method is due to a problems with
+        Bluetooth. BTLEDisconnectError or similar may be raised, for
+        example.
         """
-        try:
+        while True:
             iteration: int = 0
             while self._peripheral.waitForNotifications(4.0):
                 iteration += 1
                 if iteration % 5 == 0:
                     self.trigger_query()
-        except BTLEDisconnectError:
-            pass
+            print("Timeout while waiting for BLE notification", file=sys.stderr)
 
     def _decode(self) -> Union[None, RadAlertLEQuery, RadAlertLEStatus]:
         if len(self._receive_buffer) < 16:
