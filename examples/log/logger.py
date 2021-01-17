@@ -14,10 +14,10 @@ from datetime import datetime
 
 from radalert.ble import RadAlertLEStatus
 from radalert.ble import RadAlertLEQuery
-from radalert.util.filter import FIRFilter
-from radalert.util.filter import IIRFilter
-from radalert.util.net import Gmcmap
-from radalert.util.net import Radmon
+from radalert._util.filter import FIRFilter
+from radalert._util.filter import IIRFilter
+from radalert._util.net import Gmcmap
+from radalert._util.net import Radmon
 
 
 class ConsoleLogger:

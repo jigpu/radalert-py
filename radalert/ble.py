@@ -16,7 +16,7 @@ from enum import Enum
 from typing import Callable, Dict, List, NoReturn, Optional, Tuple, Union
 from bluepy.btle import Peripheral
 
-from radalert.util.ble import TransparentService
+from radalert._util.ble import TransparentService
 
 
 class RadAlertLEStatus:
