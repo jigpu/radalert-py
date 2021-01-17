@@ -149,7 +149,36 @@ class RadAlertLEStatus:
         data["unknown"]        =      (status >> 6) & 3
         del data["status"]
 
+        RadAlertLEStatus._validate(data)
         return data
+
+    @staticmethod
+    def _validate(data: Dict[str, Union[int, bool]]) -> None:
+        if data["cps"] > 7500*100 or data["cps"] < 0:
+            # It isn't clear what the maximum value actually is, but the
+            # manual says that the devices won't saturate in a field
+            # 100 times the maximum reading. Its unlikely that the device
+            # will actually report values 100x the spec, but just to be
+            # safe, lets assume it does. Maximum CPS specs are 7500 for
+            # the 1000EC, 5000 for the Ranger, and 3923 for the Monitor
+            # 200.
+            raise ValueError(f'cps = {data["cps"]} is unreasonably large or negative')
+
+        if data["cpm"] > 7500*100*60 or data["cpm"] < 0:
+            # Same logic as for cps, multiplied by 60
+            raise ValueError(f'cpm = {data["cpm"]} is unreasonably large or negative')
+
+        if data["power"] > 5 or data["power"] < 0:
+            raise ValueError(f'power = {data["power"]} is not a known state')
+
+        if data["alarm_alerting"] and not data["alarm_set"]:
+            raise ValueError("Alarm cannot be alerting if not set")
+
+        if data["alarm_silenced"] and not data["alarm_alerting"]:
+            raise ValueError("Alarm cannot be silenced if not alerting")
+
+        if data["mode"] not in RadAlertLEStatus._MODE_DISPLAY_INFO:
+            raise ValueError(f'mode = {data["mode"]} is not a known state')
 
 
 class RadAlertLEQuery:
@@ -219,7 +248,25 @@ class RadAlertLEQuery:
         """
         keys = ("unk1", "alarm", "unk2", "dead", "conv", "unk4")
         values = struct.unpack("<I4HI", bytestr)
-        return dict(zip(keys, values))
+        data = dict(zip(keys, values))
+
+        RadAlertLEQuery._validate(data)
+        return data
+
+    @staticmethod
+    def _validate(data: Dict[str, int]) -> None:
+        if data["unk1"] != 0xFFFFFFFF:
+            raise ValueError(f'unk1 = {data["unk1"]} was expected to be all 1s')
+        if data["alarm"] > 235400 or data["alarm"] < 0:
+            raise ValueError(f'alarm = {data["alarm"]} is unreasonably large or negative')
+        if data["unk2"] != 0:
+            raise ValueError(f'unk2 = {data["unk2"]} was expected to be zero')
+        if data["dead"] == 0:
+            raise ValueError(f'dead = {data["dead"]} may not be zero')
+        if data["conv"] > 7000 or data["conv"] < 200:
+            raise ValueError(f'conv = {data["conv"]} is outside the expected sensitivity window')
+        if data["unk4"] != 0xFFFFFFFF:
+            raise ValueError(f'unk4 = {data["unk4"]} was expected to be all 1s')
 
 
 class RadAlertLE:
@@ -256,6 +303,7 @@ class RadAlertLE:
         self._command_buffer: List[str] = []
         self._receive_buffer: bytes = b''
         self.packet_callback: Callable[[Union[RadAlertLEStatus, RadAlertLEQuery]], None] = packet_callback
+        self._last_id: Optional[int] = None
 
         self._peripheral = Peripheral(address)
         #info_service = DeviceInfoService(self._peripheral)
@@ -324,7 +372,14 @@ class RadAlertLE:
                     data = RadAlertLEQuery(packet)
                 else:
                     data = RadAlertLEStatus(packet)
-            except struct.error as e:
+
+                    if self._last_id is not None:
+                        if (self._last_id + 1) % 256 != data.id:
+                            self._last_id = None
+                            raise ValueError(f'Packet ID has jumped from {self._last_id} to {data.id}')
+                    self._last_id = data.id
+
+            except Exception as e:
                 print(f"Failed to parse: {packet.hex()}\n{e}", file=sys.stderr)
 
             self._send_ack()
