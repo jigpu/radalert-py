@@ -36,6 +36,8 @@ class ConsoleLogger:
 
     def __str__(self):
         try:
+            if self.backend.last_update is None:
+                return ""
             update_delay = datetime.now() - self.backend.last_update
             if update_delay.total_seconds() > self.delay:
                 return ""
@@ -138,6 +140,8 @@ class GmcmapLogger:
 
     def send_update(self):
         try:
+            if self.backend.last_update is None:
+                return
             update_delay = datetime.now() - self.backend.last_update
             if update_delay.total_seconds() > self.delay:
                 return
@@ -201,6 +205,8 @@ class RadmonLogger:
 
     def send_update(self):
         try:
+            if self.backend.last_update is None:
+                return
             update_delay = datetime.now() - self.backend.last_update
             if update_delay.total_seconds() > self.delay:
                 return
