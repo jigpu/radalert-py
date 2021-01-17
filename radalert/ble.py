@@ -297,13 +297,12 @@ class RadAlertLE:
         while len(self._command_buffer) > 0:
             message = self._command_buffer.pop(0)
             self._send_command(message)
-        self._send_ack()
 
     def _send_command(self, command: str) -> None:
         self._service.send_string(command + self._COMMAND_ENDL)
 
     def _send_ack(self) -> None:
-        self._send_command(self._COMMAND_STRING["ack"])
+        self._command_buffer.append(self._COMMAND_STRING["ack"])
 
     def _decode(self) -> None:
         while len(self._receive_buffer) >= 16:
@@ -322,5 +321,6 @@ class RadAlertLE:
             except struct.error as e:
                 print(f"Failed to parse: {packet.hex()}\n{e}", file=sys.stderr)
 
+            self._send_ack()
             if data is not None:
                 self.packet_callback(data)
