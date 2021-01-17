@@ -304,6 +304,7 @@ class RadAlertLE:
         self._receive_buffer: bytes = b''
         self.packet_callback: Callable[[Union[RadAlertLEStatus, RadAlertLEQuery]], None] = packet_callback
         self._last_id: Optional[int] = None
+        self._sync_count: int = 0
 
         self._peripheral = Peripheral(address)
         #info_service = DeviceInfoService(self._peripheral)
@@ -345,12 +346,49 @@ class RadAlertLE:
         except BTLEDisconnectError:
             pass
 
+    def _decode(self) -> Union[None, RadAlertLEQuery, RadAlertLEStatus]:
+        if len(self._receive_buffer) < 16:
+            return None
+        packet: bytes = self._receive_buffer[0:16]
+        data: Union[None, RadAlertLEQuery, RadAlertLEStatus] = None
+
+        if packet[0:4] == b'\xff\xff\xff\xff':
+            data = RadAlertLEQuery(packet)
+        else:
+            data = RadAlertLEStatus(packet)
+
+            if self._last_id is not None:
+                if (self._last_id + 1) % 256 != data.id:
+                    last_id: int = self._last_id
+                    self._last_id = None
+                    raise ValueError(f'Packet ID has jumped from {last_id} to {data.id}')
+            self._last_id = data.id
+        return data
+
     def _on_receive(self, bytestr: bytes) -> None:
         self._receive_buffer += bytestr
-        self._decode()
+        self._process()
         while len(self._command_buffer) > 0:
             message = self._command_buffer.pop(0)
             self._send_command(message)
+
+    def _process(self) -> None:
+        self._synchronize()
+        while self._synchronized():
+            data: Union[None, RadAlertLEQuery, RadAlertLEStatus] = None
+
+            try:
+                data = self._decode()
+                self._receive_buffer = self._receive_buffer[16:]
+            except Exception as e:
+                print(f"Failed to parse from: {self._receive_buffer.hex()}\n{e}", file=sys.stderr)
+                self._desynchronize()
+
+            self._send_ack()
+            if data is not None:
+                self.packet_callback(data)
+            else:
+                break
 
     def _send_command(self, command: str) -> None:
         self._service.send_string(command + self._COMMAND_ENDL)
@@ -358,30 +396,32 @@ class RadAlertLE:
     def _send_ack(self) -> None:
         self._command_buffer.append(self._COMMAND_STRING["ack"])
 
-    def _decode(self) -> None:
-        while len(self._receive_buffer) >= 16:
-            data: Union[None, RadAlertLEQuery, RadAlertLEStatus] = None
+    def _synchronize(self) -> None:
+        """
+        Synchronize the receive buffer to begin at a packet boundary.
 
-            # Both the data types we've seen so far are 16 bytes
-            # long; extract a chunk and figure out which it is
-            packet: bytes = self._receive_buffer[0:16]
-            self._receive_buffer = self._receive_buffer[16:]
-
+        The data we recieve over Bluetooth is not necessarily aligned
+        at packet boundaries. If we start failing to decode packets
+        then we've probably fell out of sync with the stream somehow.
+        This might be because the connection was temporarily interrupted
+        and then resumed at some place that wasn't a packet boundary.
+        In any case, drop bytes from the buffer until we can reliably
+        start decoding packets again.
+        """
+        while not self._synchronized():
             try:
-                if packet[0:4] == b'\xff\xff\xff\xff':
-                    data = RadAlertLEQuery(packet)
+                if self._decode() is None:
+                    break
                 else:
-                    data = RadAlertLEStatus(packet)
+                    self._sync_count += 1
+                    self._send_ack()
+            except Exception:
+                self._receive_buffer = self._receive_buffer[1:]
+                self._sync_count = 0
+                self._last_id = None
 
-                    if self._last_id is not None:
-                        if (self._last_id + 1) % 256 != data.id:
-                            self._last_id = None
-                            raise ValueError(f'Packet ID has jumped from {self._last_id} to {data.id}')
-                    self._last_id = data.id
+    def _desynchronize(self) -> None:
+        self._sync_count = 0
 
-            except Exception as e:
-                print(f"Failed to parse: {packet.hex()}\n{e}", file=sys.stderr)
-
-            self._send_ack()
-            if data is not None:
-                self.packet_callback(data)
+    def _synchronized(self) -> bool:
+        return self._sync_count >= 5
