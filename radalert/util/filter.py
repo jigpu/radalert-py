@@ -209,7 +209,7 @@ class IIRFilter:
         return math.exp(-math.log(1/target)/iterations)
 
     @staticmethod
-    def coefficient_to_decay_iters(coefficient, target):
+    def coefficient_to_decay_iters(coefficient: float, target: float) -> float:
         """
         Convert a coefficient to its "iterations" decay parameter.
 
