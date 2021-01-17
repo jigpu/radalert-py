@@ -284,7 +284,7 @@ class RadAlertLE:
         """
         try:
             iteration: int = 0
-            while self._peripheral.waitForNotifications(10.0):
+            while self._peripheral.waitForNotifications(4.0):
                 iteration += 1
                 if iteration % 5 == 0:
                     self.trigger_query()
