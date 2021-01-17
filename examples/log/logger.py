@@ -9,15 +9,15 @@ the callback to provide a basic console logging program.
 
 import sys
 import threading
-import urllib.request
 from datetime import datetime
-from string import Template
 
 
 from radalert.ble import RadAlertLEStatus
 from radalert.ble import RadAlertLEQuery
 from radalert.util.filter import FIRFilter
 from radalert.util.filter import IIRFilter
+from radalert.util.net import Gmcmap
+from radalert.util.net import Radmon
 
 
 class ConsoleLogger:
@@ -126,13 +126,9 @@ class GmcmapLogger:
     """
     Simple class to take care of logging data to the GMC.MAP service.
     """
-
-    _URL_TEMPLATE=Template("http://www.GMCmap.com/log2.asp?AID=${GMC_ACCOUNT_ID}&GID=${GMC_GEIGER_ID}&CPM=${CPM}&ACPM=${ACPM}&uSV=${USV}")
-
     def __init__(self, backend, account_id, geiger_id, delay=180):
         self.backend = backend
-        self.account_id = account_id
-        self.geiger_id = geiger_id
+        self.Gmcmap = Gmcmap(account_id, geiger_id)
         self.delay = delay
 
         self._running = False
@@ -158,14 +154,7 @@ class GmcmapLogger:
         """
         Send the log data to the service.
         """
-        url=GmcmapLogger._URL_TEMPLATE.substitute(
-            GMC_ACCOUNT_ID=self.account_id,
-            GMC_GEIGER_ID=self.geiger_id,
-            CPM=f'{cpm:.2f}',
-            ACPM=f'{acpm:.2f}',
-            USV=f'{usv:.5f}'
-        )
-        urllib.request.urlopen(url).read()
+        self.Gmcmap.send_values(cpm, acpm, usv)
 
     def spin(self):
         """
@@ -191,13 +180,9 @@ class RadmonLogger:
     """
     Simple class to take care of logging data to the Radmon service.
     """
-
-    _URL_TEMPLATE=Template("http://radmon.org/radmon.php?function=submit&user=${RADMON_USERNAME}&password=${RADMON_PASSWORD}&value=${CPM}&unit=CPM")
-
     def __init__(self, backend, account_id, geiger_id, delay=180):
         self.backend = backend
-        self.account_id = account_id
-        self.geiger_id = geiger_id
+        self.Radmon = Radmon(account_id, geiger_id)
         self.delay = delay
 
         self._running = False
@@ -221,12 +206,7 @@ class RadmonLogger:
         """
         Send the log data to the service.
         """
-        url=RadmonLogger._URL_TEMPLATE.substitute(
-            RADMON_USERNAME=self.account_id,
-            RADMON_PASSWORD=self.geiger_id,
-            CPM=f'{cpm:.2f}',
-        )
-        urllib.request.urlopen(url).read()
+        self.Radmon.send_values(cpm)
 
     def spin(self):
         """
