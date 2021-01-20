@@ -37,7 +37,7 @@ from bluepy.btle import BTLEException
 from radalert.ble import RadAlertLE
 
 
-def spin(address, backend):
+def spin(device):
     """
     Connect to the given address and begin spinning for data.
 
@@ -48,12 +48,11 @@ def spin(address, backend):
     This function only returns in the case of an error or
     disconnection.
     """
-    print("Connecting to {}".format(address), file=sys.stderr)
     try:
-        device = RadAlertLE(address, backend.radalert_le_callback)
         device.spin() # Infinite loop
     except (BTLEDisconnectError, BTLEException) as e:
         print(e, file=sys.stderr)
+    device.disconnect()
 
 def scan(seconds):
     """
@@ -113,12 +112,20 @@ def main():
     #radmon_thread.start()
 
     # Keep attempting to reconnect if anything goes wrong
+    device = RadAlertLE(backend.radalert_le_callback)
     while True:
         if len(sys.argv) == 1:
             address = find_any()
         else:
             address = sys.argv[1]
-        spin(address, backend)
+
+        try:
+            print("Connecting to {}".format(address), file=sys.stderr)
+            device.connect(address)
+        except (BTLEDisconnectError, BTLEException) as e:
+            print(e, file=sys.stderr)
+            continue
+        spin(device)
         time.sleep(3)
 
 if __name__=="__main__":

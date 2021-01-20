@@ -298,20 +298,33 @@ class RadAlertLE:
     }
     _COMMAND_ENDL: str = "\n"
 
-    def __init__(self, address, packet_callback: Callable[[Union[RadAlertLEStatus, RadAlertLEQuery]], None]) -> None:
+    def _reset(self) -> None:
+        self._peripheral: Optional[Peripheral] = None
+        self._service: Optional[TransparentService] = None
         self._command_buffer: List[str] = []
         self._receive_buffer: bytes = b''
-        self.packet_callback: Callable[[Union[RadAlertLEStatus, RadAlertLEQuery]], None] = packet_callback
         self._last_id: Optional[int] = None
         self._sync_count: int = 0
 
+    def __init__(self, packet_callback: Callable[[Union[RadAlertLEStatus, RadAlertLEQuery]], None]) -> None:
+        self.packet_callback: Callable[[Union[RadAlertLEStatus, RadAlertLEQuery]], None] = packet_callback
+        self._peripheral = None
+        self._reset()
+
+    def __del__(self) -> None:
+        self.disconnect()
+
+    def connect(self, address: str) -> None:
+        self.disconnect()
         self._peripheral = Peripheral(address)
         #info_service = DeviceInfoService(self._peripheral)
         #print(info_service.get_information())
         self._service = TransparentService(self._peripheral, self._on_receive)
 
-    def __del__(self) -> None:
-        self._peripheral.disconnect()
+    def disconnect(self) -> None:
+        if self._peripheral is not None:
+            self._peripheral.disconnect()
+        self._reset()
 
     def trigger_query(self) -> None:
         """
@@ -336,6 +349,8 @@ class RadAlertLE:
         Bluetooth. BTLEDisconnectError or similar may be raised, for
         example.
         """
+        if self._peripheral is None:
+            raise RuntimeError("Peripheral has not been initialized")
         while True:
             iteration: int = 0
             while self._peripheral.waitForNotifications(4.0):
@@ -389,6 +404,8 @@ class RadAlertLE:
                 break
 
     def _send_command(self, command: str) -> None:
+        if self._service is None:
+            raise RuntimeError("Service has not been initialized")
         self._service.send_string(command + self._COMMAND_ENDL)
 
     def _send_ack(self) -> None:
