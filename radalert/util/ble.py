@@ -90,12 +90,14 @@ class TransparentService:
     _UUID_DESCRIPTOR_TX: str = "00002902-0000-1000-8000-00805f9b34fb"
 
     class _TransparentDelegate(DefaultDelegate):
-        def __init__(self, callback: Callable[[bytes], None]) -> None:
+        def __init__(self, callback: Callable[[bytes], None], handle: int) -> None:
             DefaultDelegate.__init__(self)
             self.callback = callback
+            self.handle = handle
 
         def handleNotification(self, cHandle: int, data: bytes) -> None:
-            self.callback(data)
+            if cHandle == self.handle:
+                self.callback(data)
 
     def __init__(self, peripheral, callback: Callable[[bytes], None]) -> None:
         try:
@@ -108,7 +110,7 @@ class TransparentService:
             raise BTLEException("Transparent UART service not found") from exception
 
         # Set up the notification delegate and turn them on
-        delegate = self._TransparentDelegate(callback)
+        delegate = self._TransparentDelegate(callback, self._char_tx.getHandle())
         peripheral.setDelegate(delegate)
         self._desc_tx.write(b'\x01\x00')
 
