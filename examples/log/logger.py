@@ -85,9 +85,9 @@ class ConsoleLogger:
         ts_minmax = timespan(self.backend.minmax_samples)
 
         table = (
-            f"time",
-            f"battery",
-            f"cpm/(mR/h)",
+            "time",
+            "battery",
+            "cpm/(mR/h)",
             f"{ts_actual[0]}{ts_actual[1]}-count",
             f"{ts_short[0]}{ts_short[1]}-avg-cpm",
             f"{ts_medium[0]}{ts_medium[1]}-avg-cpm",

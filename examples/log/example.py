@@ -26,8 +26,8 @@ from threading import Thread
 
 from logger import ConsoleLogger
 from logger import LogBackend
-from logger import GmcmapLogger
-from logger import RadmonLogger
+#from logger import GmcmapLogger
+#from logger import RadmonLogger
 
 from bluepy.btle import Scanner
 from bluepy.btle import BTLEDisconnectError
