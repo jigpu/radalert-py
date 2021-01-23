@@ -10,6 +10,7 @@ There are still some unknown components of this protocol, but its current
 state is good enough for most basic work :)
 """
 
+import sys
 import struct
 from enum import Enum
 from typing import Callable, Dict, List, Optional, Tuple, Union
@@ -318,9 +319,8 @@ class RadAlertLE:
                     data = RadAlertLEQuery(packet)
                 else:
                     data = RadAlertLEStatus(packet)
-            except struct.error as exception:
-                print(f"Failed to parse: {packet.hex()}")
-                print(exception)
+            except struct.error as e:
+                print(f"Failed to parse: {packet.hex()}\n{e}", file=sys.stderr)
 
             if data is not None:
                 self.packet_callback(data)
