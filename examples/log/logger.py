@@ -151,8 +151,8 @@ class GmcmapLogger:
             usv = avg_short / self.backend.conversion * 10
 
             self.send_values(avg_short, avg_long, usv)
-        except:
-            print("Unable to send values to gmc server", file=sys.stderr)
+        except Exception as e:
+            print(f"Unable to send values to gmc server: {e}", file=sys.stderr)
 
     def send_values(self, cpm, acpm, usv):
         """
@@ -214,8 +214,8 @@ class RadmonLogger:
             avg_short = self.backend.averages[0].value * 60
 
             self.send_values(avg_short)
-        except:
-            print("Unable to send values to radmon server", file=sys.stderr)
+        except Exception as e:
+            print(f"Unable to send values to radmon server: {e}", file=sys.stderr)
 
     def send_values(self, cpm):
         """

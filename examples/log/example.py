@@ -51,7 +51,8 @@ def spin(address, backend):
     print("Connecting to {}".format(address), file=sys.stderr)
     try:
         device = RadAlertLE(address, backend.radalert_le_callback)
-    except (BTLEDisconnectError, BTLEException):
+    except (BTLEDisconnectError, BTLEException) as e:
+        print(e, file=sys.stderr)
         return
     device.spin() # Infinite loop
 
