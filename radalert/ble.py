@@ -12,6 +12,7 @@ state is good enough for most basic work :)
 
 import struct
 from enum import Enum
+from typing import Callable, Dict, List, Optional, Tuple, Union
 from bluepy.btle import Peripheral
 from bluepy.btle import BTLEDisconnectError
 
@@ -25,7 +26,7 @@ class RadAlertLEStatus:
     Not all fields in the status packet have been deciphered yet.
     """
 
-    _MODE_DISPLAY_INFO = {
+    _MODE_DISPLAY_INFO: Dict[int, Tuple[str, Callable[[float], float]]] = {
         0:  ("cpm",    lambda x: x),       # convert data from CPM
         1:  ("cps",    lambda x: x/10),    # convert data from centi-CPS
         2:  ("µR/h",   lambda x: x),       # convert data from uR/h
@@ -41,41 +42,41 @@ class RadAlertLEStatus:
         ALERTING = 3
         SILENCED = 4
 
-    def __init__(self, bytestr):
+    def __init__(self, bytestr: bytes) -> None:
         """
         Create a status object from a bytes object.
         """
-        self._data = RadAlertLEStatus.unpack(bytestr)
-        self.type = "status"
+        self._data: Dict[str, Union[int, bool]] = RadAlertLEStatus.unpack(bytestr)
+        self.type: str = "status"
 
     @property
-    def cps(self):
+    def cps(self) -> int:
         """Get the number of counts observed in the last second."""
         return self._data["cps"]
 
     @property
-    def cpm(self):
+    def cpm(self) -> float:
         """Get the average number of counts per minute."""
         return self._data["cpm"]
 
     @property
-    def id(self):
+    def id(self) -> int:
         """Get the rolling ID number of this packet."""
         return self._data["id"]
 
     @property
-    def is_charging(self):
+    def is_charging(self) -> bool:
         """Get a bool indicating if the device is charging."""
         return self._data["power"] == 5
 
     @property
-    def battery_percent(self):
+    def battery_percent(self) -> Optional[float]:
         """Get the battery percentage, or None if not available."""
         return None if self.is_charging else \
                self._data["power"] / 4 * 100
 
     @property
-    def alarm_state(self):
+    def alarm_state(self) -> AlarmState:
         """Get the current alarm state."""
         return RadAlertLEStatus.AlarmState.SILENCED if self._data["alarm_silenced"] else \
                RadAlertLEStatus.AlarmState.ALERTING if self._data["alarm_alerting"] else \
@@ -83,7 +84,7 @@ class RadAlertLEStatus:
                RadAlertLEStatus.AlarmState.DISABLED
 
     @property
-    def display_value(self):
+    def display_value(self) -> float:
         """
         Get the on-screen value being displayed in the current mode.
 
@@ -95,7 +96,7 @@ class RadAlertLEStatus:
         return info[1](value)
 
     @property
-    def display_units(self):
+    def display_units(self) -> str:
         """
         Get the units associated with the current mode.
 
@@ -106,7 +107,7 @@ class RadAlertLEStatus:
         return info[0]
 
     @property
-    def unknown(self):
+    def unknown(self) -> int:
         """
         Get the unknown data contained within the packet.
 
@@ -115,7 +116,7 @@ class RadAlertLEStatus:
         return self._data["unknown"]
 
     @staticmethod
-    def unpack(bytestr):
+    def unpack(bytestr: bytes) -> Dict[str, Union[int, bool]]:
         """
         Attempt to unpack a status packet.
 
@@ -157,20 +158,20 @@ class RadAlertLEQuery:
     Not all fields in the query packet have been deciphered yet.
     """
 
-    def __init__(self, bytestr):
+    def __init__(self, bytestr: bytes) -> None:
         """
         Create a status object from a bytes object.
         """
-        self._data = RadAlertLEQuery.unpack(bytestr)
-        self.type = "query"
+        self._data: Dict[str, int] = RadAlertLEQuery.unpack(bytestr)
+        self.type: str = "query"
 
     @property
-    def alarm_level(self):
+    def alarm_level(self) -> int:
         """Get the current alarm level in CPS (even if alarm is disabled)."""
         return self._data["alarm"]
 
     @property
-    def conversion_factor(self):
+    def conversion_factor(self) -> float:
         """
         Get the conversion factor from CPM to mR/h.
 
@@ -180,7 +181,7 @@ class RadAlertLEQuery:
         return self._data["conv"]
 
     @property
-    def unknown(self):
+    def unknown(self) -> Tuple[int, int, int, int]:
         """
         Get the unknown data contained within the packet.
 
@@ -194,7 +195,7 @@ class RadAlertLEQuery:
                 self._data["unk4"])
 
     @staticmethod
-    def unpack(bytestr):
+    def unpack(bytestr: bytes) -> Dict[str, int]:
         """
         Attempt to unpack a query packet.
 
@@ -237,29 +238,27 @@ class RadAlertLE:
     things don't work right. Its kinda like X is "execute last command"
     (or ack if no last command), aside from that last observation...
     """
-    _COMMAND_STRING = {
+    _COMMAND_STRING: Dict[str, str] = {
         "query":     "?",
         "terminate": "Z",
         "ack":       "X",
     }
-    _COMMAND_ENDL = "\n"
+    _COMMAND_ENDL: str = "\n"
 
-    def __init__(self, address, packet_callback):
-        self._command_buffer = []
-        self._receive_buffer = b''
-        self.packet_callback = packet_callback
-        self._peripheral = None
+    def __init__(self, address, packet_callback: Callable[[Union[RadAlertLEStatus, RadAlertLEQuery]], None]) -> None:
+        self._command_buffer: List[str] = []
+        self._receive_buffer: bytes = b''
+        self.packet_callback: Callable[[Union[RadAlertLEStatus, RadAlertLEQuery]], None] = packet_callback
 
         self._peripheral = Peripheral(address)
         #info_service = DeviceInfoService(self._peripheral)
         #print(info_service.get_information())
         self._service = TransparentService(self._peripheral, self._on_receive)
 
-    def __del__(self):
-        if self._peripheral is not None:
-            self._peripheral.disconnect()
+    def __del__(self) -> None:
+        self._peripheral.disconnect()
 
-    def trigger_query(self):
+    def trigger_query(self) -> None:
         """
         Immediately request that we send a query request to the device.
 
@@ -269,7 +268,7 @@ class RadAlertLE:
         """
         self._command_buffer.append(self._COMMAND_STRING["query"])
 
-    def spin(self):
+    def spin(self) -> None:
         """
         Spin our wheels reading data from the device.
 
@@ -283,7 +282,7 @@ class RadAlertLE:
         essentially an infinite loop.
         """
         try:
-            iteration = 0
+            iteration: int = 0
             while self._peripheral.waitForNotifications(10.0):
                 iteration += 1
                 if iteration % 5 == 0:
@@ -291,7 +290,7 @@ class RadAlertLE:
         except BTLEDisconnectError:
             pass
 
-    def _on_receive(self, bytestr):
+    def _on_receive(self, bytestr: bytes) -> None:
         self._receive_buffer += bytestr
         self._decode()
         while len(self._command_buffer) > 0:
@@ -299,19 +298,19 @@ class RadAlertLE:
             self._send_command(message)
         self._send_ack()
 
-    def _send_command(self, command):
+    def _send_command(self, command: str) -> None:
         self._service.send_string(command + self._COMMAND_ENDL)
 
-    def _send_ack(self):
+    def _send_ack(self) -> None:
         self._send_command(self._COMMAND_STRING["ack"])
 
-    def _decode(self):
+    def _decode(self) -> None:
         while len(self._receive_buffer) >= 16:
-            data = None
+            data: Union[None, RadAlertLEQuery, RadAlertLEStatus] = None
 
             # Both the data types we've seen so far are 16 bytes
             # long; extract a chunk and figure out which it is
-            packet = self._receive_buffer[0:16]
+            packet: bytes = self._receive_buffer[0:16]
             self._receive_buffer = self._receive_buffer[16:]
 
             try:
@@ -320,7 +319,7 @@ class RadAlertLE:
                 else:
                     data = RadAlertLEStatus(packet)
             except struct.error as exception:
-                print(f"Failed to parse: {packet}")
+                print(f"Failed to parse: {packet.hex()}")
                 print(exception)
 
             if data is not None:

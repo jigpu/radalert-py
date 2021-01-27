@@ -5,16 +5,17 @@ Provides functions and classes that implement FIR and IIR filters.
 """
 
 import math
+from typing import Callable, List, Optional
 
 
-def mean_arithmetic(values):
+def mean_arithmetic(values: List[float]) -> Optional[float]:
     """Get the arithmetic mean of the input list."""
     if len(values) == 0:
         return None
     return sum(values) / len(values)
 
 
-def mean_geometric(values):
+def mean_geometric(values: List[float]) -> Optional[float]:
     """Get the geometric mean of the input list."""
     if len(values) == 0:
         return None
@@ -24,12 +25,14 @@ def mean_geometric(values):
     return mean
 
 
-def mean_quadradic(values):
+def mean_quadradic(values: List[float]) -> Optional[float]:
     """Get the quadradic mean / RMS value of the input list."""
     if len(values) == 0:
         return None
-    squares = map(lambda x: x*x, values)
+    squares = list(map(lambda x: x*x, values))
     mean = mean_arithmetic(squares)
+    if mean is None:
+        return None
     return math.pow(mean, 0.5)
 
 
@@ -42,7 +45,7 @@ class FIRFilter:
     be specified when the filter is initalized.
     """
 
-    def __init__(self, size, function=mean_arithmetic):
+    def __init__(self, size: int, function: Callable[[List[float]], Optional[float]] = mean_arithmetic) -> None:
         """
         Create an FIR filter with the specified size and filtering function.
 
@@ -51,11 +54,11 @@ class FIRFilter:
         whenever the `.value` property is accessed. The default filter
         function is simply the arithmetic mean.
         """
-        self.size = size
-        self.values = []
-        self.function = function
+        self.size: int = size
+        self.values: List[float] = []
+        self.function: Callable[[List[float]], Optional[float]] = function
 
-    def iterate(self, value):
+    def iterate(self, value: float) -> Optional[float]:
         """
         Add the specified value into the filter and return the updated
         filtered value.
@@ -66,7 +69,7 @@ class FIRFilter:
         return self.value
 
     @property
-    def value(self):
+    def value(self) -> Optional[float]:
         """
         Get the current filtered value.
 
@@ -92,7 +95,7 @@ class IIRFilter:
     values and observe the filter output.
     """
 
-    def __init__(self, coefficient):
+    def __init__(self, coefficient: float) -> None:
         """
         Create an IIR filter with the specified decay coefficient.
 
@@ -102,10 +105,10 @@ class IIRFilter:
         familiar representations can also be used by calling the various
         `create_from_xxx` functions instead.
         """
-        self.coefficient = coefficient
-        self.value = None
+        self.coefficient: float = coefficient
+        self.value: Optional[float] = None
 
-    def iterate(self, value):
+    def iterate(self, value: float) -> float:
         """
         Mix the provided value into the IIR filter, advancing its state
         by one iteration.
@@ -117,7 +120,7 @@ class IIRFilter:
         return self.value
 
     @staticmethod
-    def create_from_time_constant(iterations):
+    def create_from_time_constant(iterations: float) -> 'IIRFilter':
         """
         Create an IIR filter with the specificied time-constant.
 
@@ -128,7 +131,7 @@ class IIRFilter:
         return IIRFilter(coefficient)
 
     @staticmethod
-    def create_from_half_life(iterations):
+    def create_from_half_life(iterations: float) -> 'IIRFilter':
         """
         Create an IIR filter with the specified half-life.
 
@@ -139,7 +142,7 @@ class IIRFilter:
         return IIRFilter(coefficient)
 
     @staticmethod
-    def create_from_decay_params(target, iterations):
+    def create_from_decay_params(target, iterations: float) -> 'IIRFilter':
         """
         Create an IIR filter with the specified decay parameters.
 
@@ -151,7 +154,7 @@ class IIRFilter:
         return IIRFilter(coefficient)
 
     @staticmethod
-    def time_constant_to_coefficient(iterations):
+    def time_constant_to_coefficient(iterations: float) -> float:
         """
         Convert a time-constant to a decay coefficient.
 
@@ -162,7 +165,7 @@ class IIRFilter:
         return math.exp(-1/iterations)
 
     @staticmethod
-    def coefficient_to_time_constant(coefficient):
+    def coefficient_to_time_constant(coefficient: float) -> float:
         """
         Convert a decay coefficient to a time-constant.
 
@@ -173,7 +176,7 @@ class IIRFilter:
         return -1/math.log(coefficient)
 
     @staticmethod
-    def half_life_to_coefficient(iterations):
+    def half_life_to_coefficient(iterations: float) -> float:
         """
         Convert a half-life to a decay coefficient.
 
@@ -184,7 +187,7 @@ class IIRFilter:
         return math.exp(-math.log(2)/iterations)
 
     @staticmethod
-    def coefficient_to_half_life(coefficient):
+    def coefficient_to_half_life(coefficient: float) -> float:
         """
         Convert a decay coefficient to a half-life.
 
@@ -195,7 +198,7 @@ class IIRFilter:
         return -math.log(2)/math.log(coefficient)
 
     @staticmethod
-    def decay_params_to_coefficient(target, iterations):
+    def decay_params_to_coefficient(target: float, iterations: float) -> float:
         """
         Convert decay parameters to a decay coefficient.
 
