@@ -115,7 +115,7 @@ class RadAlertLEStatus:
         return info[0]
 
     @property
-    def unknown(self) -> int:
+    def _unknown(self) -> int:
         """
         Get the unknown data contained within the packet.
 
@@ -230,7 +230,7 @@ class RadAlertLEQuery:
         return 1 / self._data["dead"]
 
     @property
-    def unknown(self) -> Tuple[int, int, int]:
+    def _unknown(self) -> Tuple[int, int, int]:
         """
         Get the unknown data contained within the packet.
 
