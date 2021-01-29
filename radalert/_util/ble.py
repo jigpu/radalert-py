@@ -58,12 +58,12 @@ class DeviceInfoService:
         characteristics that do not exist.
         """
         return {
-            "manufacturer":  self._read_characteristic(self._UUID_CHARACTERISTIC_MANUFACTURER),
-            "model_number":  self._read_characteristic(self._UUID_CHARACTERISTIC_MODEL_NUMBER),
-            "serial_number": self._read_characteristic(self._UUID_CHARACTERISTIC_SERIAL_NUMBER),
-            "hw_revision":   self._read_characteristic(self._UUID_CHARACTERISTIC_HW_REVISION),
-            "fw_revision":   self._read_characteristic(self._UUID_CHARACTERISTIC_FW_REVISION),
-            "sw_revision":   self._read_characteristic(self._UUID_CHARACTERISTIC_SW_REVISION),
+            "manufacturer":  self._read_characteristic(DeviceInfoService._UUID_CHARACTERISTIC_MANUFACTURER),
+            "model_number":  self._read_characteristic(DeviceInfoService._UUID_CHARACTERISTIC_MODEL_NUMBER),
+            "serial_number": self._read_characteristic(DeviceInfoService._UUID_CHARACTERISTIC_SERIAL_NUMBER),
+            "hw_revision":   self._read_characteristic(DeviceInfoService._UUID_CHARACTERISTIC_HW_REVISION),
+            "fw_revision":   self._read_characteristic(DeviceInfoService._UUID_CHARACTERISTIC_FW_REVISION),
+            "sw_revision":   self._read_characteristic(DeviceInfoService._UUID_CHARACTERISTIC_SW_REVISION),
         }
 
 
@@ -103,9 +103,9 @@ class TransparentService:
         try:
             service = peripheral.getServiceByUUID(self._UUID_SERVICE)
 
-            self._char_tx = service.getCharacteristics(forUUID=self._UUID_CHARACTERISTIC_TX)[0]
-            self._char_rx = service.getCharacteristics(forUUID=self._UUID_CHARACTERISTIC_RX)[0]
-            self._desc_tx = service.getDescriptors(forUUID=self._UUID_DESCRIPTOR_TX)[0]
+            self._char_tx = service.getCharacteristics(forUUID=TransparentService._UUID_CHARACTERISTIC_TX)[0]
+            self._char_rx = service.getCharacteristics(forUUID=TransparentService._UUID_CHARACTERISTIC_RX)[0]
+            self._desc_tx = service.getDescriptors(forUUID=TransparentService._UUID_DESCRIPTOR_TX)[0]
         except (BTLEException, IndexError) as exception:
             raise BTLEException("Transparent UART service not found") from exception
 
