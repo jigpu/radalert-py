@@ -21,7 +21,7 @@ def mean_geometric(values: List[float]) -> Optional[float]:
         return None
     mean = values[0]
     for i in range(1, len(values)):
-        mean = math.pow(values[i] * math.pow(mean, i-1), 1/i)
+        mean = math.pow(values[i] * math.pow(mean, i - 1), 1 / i)
     return mean
 
 
@@ -29,7 +29,7 @@ def mean_quadradic(values: List[float]) -> Optional[float]:
     """Get the quadradic mean / RMS value of the input list."""
     if len(values) == 0:
         return None
-    squares = list(map(lambda x: x*x, values))
+    squares = list(map(lambda x: x * x, values))
     mean = mean_arithmetic(squares)
     if mean is None:
         return None
@@ -44,8 +44,11 @@ class FIRFilter:
     the last "n" input values. The exact filtering function can
     be specified when the filter is initalized.
     """
-
-    def __init__(self, size: int, function: Callable[[List[float]], Optional[float]] = mean_arithmetic) -> None:
+    def __init__(
+        self,
+        size: int,
+        function: Callable[[List[float]], Optional[float]] = mean_arithmetic
+    ) -> None:
         """
         Create an FIR filter with the specified size and filtering function.
 
@@ -94,7 +97,6 @@ class IIRFilter:
     Once constructed, you can `iterate()` the filter with input
     values and observe the filter output.
     """
-
     def __init__(self, coefficient: float) -> None:
         """
         Create an IIR filter with the specified decay coefficient.
@@ -116,7 +118,7 @@ class IIRFilter:
         if self.value is None:
             self.value = value
         self.value *= self.coefficient
-        self.value += value * (1-self.coefficient)
+        self.value += value * (1 - self.coefficient)
         return self.value
 
     @staticmethod
@@ -162,7 +164,7 @@ class IIRFilter:
         a value of 1/e times its original value in the number of
         specified iterations.
         """
-        return math.exp(-1/iterations)
+        return math.exp(-1 / iterations)
 
     @staticmethod
     def coefficient_to_time_constant(coefficient: float) -> float:
@@ -173,7 +175,7 @@ class IIRFilter:
         given coefficient to decay to a value of 1/e times its original
         value.
         """
-        return -1/math.log(coefficient)
+        return -1 / math.log(coefficient)
 
     @staticmethod
     def half_life_to_coefficient(iterations: float) -> float:
@@ -184,7 +186,7 @@ class IIRFilter:
         a value of 1/2 times its original value in the number of
         specified iterations.
         """
-        return math.exp(-math.log(2)/iterations)
+        return math.exp(-math.log(2) / iterations)
 
     @staticmethod
     def coefficient_to_half_life(coefficient: float) -> float:
@@ -195,7 +197,7 @@ class IIRFilter:
         given coefficient to decay to a value of 1/2 times its original
         value.
         """
-        return -math.log(2)/math.log(coefficient)
+        return -math.log(2) / math.log(coefficient)
 
     @staticmethod
     def decay_params_to_coefficient(target: float, iterations: float) -> float:
@@ -206,7 +208,7 @@ class IIRFilter:
         a value of target times its original value in the number of
         specified iterations.
         """
-        return math.exp(-math.log(1/target)/iterations)
+        return math.exp(-math.log(1 / target) / iterations)
 
     @staticmethod
     def coefficient_to_decay_iters(coefficient: float, target: float) -> float:
@@ -217,4 +219,4 @@ class IIRFilter:
         given coefficient to decay to a value of 1/target times its
         original value.
         """
-        return -math.log(1/target)/math.log(coefficient)
+        return -math.log(1 / target) / math.log(coefficient)

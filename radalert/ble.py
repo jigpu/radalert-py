@@ -25,15 +25,16 @@ class RadAlertLEStatus:
 
     Not all fields in the status packet have been deciphered yet.
     """
-
+    # yapf: disable
     _MODE_DISPLAY_INFO: Dict[int, Tuple[str, Callable[[float], float]]] = {
-        0:  ("cpm",    lambda x: x),       # convert data from CPM
-        1:  ("cps",    lambda x: x/10),    # convert data from centi-CPS
-        2:  ("µR/h",   lambda x: x),       # convert data from uR/h
-        3:  ("µSv/h",  lambda x: x/1000),  # convert data from nSv/h
-        20: ("counts", lambda x: x),       # convert data from counts
-        23: ("mR/h",   lambda x: x/1000),  # convert data from uR/h
+        0:  ("cpm",    lambda x: x),       # CPM -> CPM
+        1:  ("cps",    lambda x: x/10),    # centi-CPS -> CPS
+        2:  ("µR/h",   lambda x: x),       # uR/h -> uR/h
+        3:  ("µSv/h",  lambda x: x/1000),  # nSv/h -> uS/h
+        20: ("counts", lambda x: x),       # counts -> counts
+        23: ("mR/h",   lambda x: x/1000),  # uR/h -> mR/h
     }
+    # yapf: enable
 
     class AlarmState(Enum):
         """Enumeration of possible alarm states."""
@@ -46,7 +47,8 @@ class RadAlertLEStatus:
         """
         Create a status object from a bytes object.
         """
-        self._data: Dict[str, Union[int, bool]] = RadAlertLEStatus.unpack(bytestr)
+        self._data: Dict[str, Union[int, bool]] = \
+            RadAlertLEStatus.unpack(bytestr)
         self.type: str = "status"
 
     @property
@@ -73,15 +75,21 @@ class RadAlertLEStatus:
     def battery_percent(self) -> Optional[float]:
         """Get the battery percentage, or None if not available."""
         return None if self.is_charging else \
-               self._data["power"] / 4 * 100
+            self._data["power"] / 4 * 100
 
     @property
     def alarm_state(self) -> AlarmState:
         """Get the current alarm state."""
-        return RadAlertLEStatus.AlarmState.SILENCED if self._data["alarm_silenced"] else \
-               RadAlertLEStatus.AlarmState.ALERTING if self._data["alarm_alerting"] else \
-               RadAlertLEStatus.AlarmState.SET      if self._data["alarm_set"]      else \
-               RadAlertLEStatus.AlarmState.DISABLED
+
+        # This chain of conditions must be kept in priority order
+        if self._data["alarm_silenced"]:
+            return RadAlertLEStatus.AlarmState.SILENCED
+        elif self._data["alarm_alerting"]:
+            return RadAlertLEStatus.AlarmState.ALERTING
+        elif self._data["alarm_set"]:
+            return RadAlertLEStatus.AlarmState.SET
+        else:
+            return RadAlertLEStatus.AlarmState.DISABLED
 
     @property
     def display_value(self) -> float:
@@ -126,13 +134,13 @@ class RadAlertLEStatus:
         Dictionary keys:
           * cps:    Number of counts measured in the last second
           * value:  Value currently displayed on screen (scaled)
-          * mode:   Device's current mode number (affects meaning & scale of "value")
+          * mode:   Device's current mode number (affects meaning of "value")
           * cpm:    Current average counts per minute
           * id:     8-bit counter which increments with each packet
           * power:  Battery level / charging indication
-          * alarm_active:   Flag indicating if the radiation alarm has been tripped
-          * alarm_set:      Flag indicating if the radiation alarm is set
-          * alarm_silenced: Flag indicating if the radiation alarm has been silenced
+          * alarm_active:   Flag: radiation alarm has been tripped
+          * alarm_set:      Flag: radiation alarm is set
+          * alarm_silenced: Flag: radiation alarm has been silenced
           * unknown: 2-bit value or pair of flags with unknown purpose
         """
         keys = ("cps", "value", "mode", "cpm", "status", "id")
@@ -141,11 +149,15 @@ class RadAlertLEStatus:
 
         # Unpack the status byte into its individual fields
         status = data["status"]
+
+        # yapf: disable
         data["power"]          =      (status >> 0) & 7
         data["alarm_alerting"] = bool((status >> 3) & 1)
         data["alarm_set"]      = bool((status >> 4) & 1)
         data["alarm_silenced"] = bool((status >> 5) & 1)
         data["unknown"]        =      (status >> 6) & 3
+        # yapf: enable
+
         del data["status"]
 
         RadAlertLEStatus._validate(data)
@@ -153,7 +165,7 @@ class RadAlertLEStatus:
 
     @staticmethod
     def _validate(data: Dict[str, Union[int, bool]]) -> None:
-        if data["cps"] > 7500*100 or data["cps"] < 0:
+        if data["cps"] > 7500 * 100 or data["cps"] < 0:
             # It isn't clear what the maximum value actually is, but the
             # manual says that the devices won't saturate in a field
             # 100 times the maximum reading. Its unlikely that the device
@@ -161,11 +173,13 @@ class RadAlertLEStatus:
             # safe, lets assume it does. Maximum CPS specs are 7500 for
             # the 1000EC, 5000 for the Ranger, and 3923 for the Monitor
             # 200.
-            raise ValueError(f'cps = {data["cps"]} is unreasonably large or negative')
+            raise ValueError(
+                f'cps = {data["cps"]} is unreasonably large or negative')
 
-        if data["cpm"] > 7500*100*60 or data["cpm"] < 0:
+        if data["cpm"] > 7500 * 100 * 60 or data["cpm"] < 0:
             # Same logic as for cps, multiplied by 60
-            raise ValueError(f'cpm = {data["cpm"]} is unreasonably large or negative')
+            raise ValueError(
+                f'cpm = {data["cpm"]} is unreasonably large or negative')
 
         if data["power"] > 5 or data["power"] < 0:
             raise ValueError(f'power = {data["power"]} is not a known state')
@@ -186,7 +200,6 @@ class RadAlertLEQuery:
 
     Not all fields in the query packet have been deciphered yet.
     """
-
     def __init__(self, bytestr: bytes) -> None:
         """
         Create a status object from a bytes object.
@@ -214,7 +227,7 @@ class RadAlertLEQuery:
         """
         Get the tube deadtime in seconds.
         """
-        return 1/self._data["dead"]
+        return 1 / self._data["dead"]
 
     @property
     def unknown(self) -> Tuple[int, int, int]:
@@ -225,9 +238,7 @@ class RadAlertLEQuery:
         in the packet. Since they are unknown, their data boundaries
         are not necessarily correct...
         """
-        return (self._data["unk1"],
-                self._data["unk2"],
-                self._data["unk4"])
+        return (self._data["unk1"], self._data["unk2"], self._data["unk4"])
 
     @staticmethod
     def unpack(bytestr: bytes) -> Dict[str, int]:
@@ -255,17 +266,17 @@ class RadAlertLEQuery:
     @staticmethod
     def _validate(data: Dict[str, int]) -> None:
         if data["unk1"] != 0xFFFFFFFF:
-            raise ValueError(f'unk1 = {data["unk1"]} was expected to be all 1s')
+            raise ValueError(f'unk1 = {data["unk1"]} but expected all 1s')
         if data["alarm"] > 235400 or data["alarm"] < 0:
-            raise ValueError(f'alarm = {data["alarm"]} is unreasonably large or negative')
+            raise ValueError(f'alarm = {data["alarm"]} outside expected range')
         if data["unk2"] != 0:
             raise ValueError(f'unk2 = {data["unk2"]} was expected to be zero')
         if data["dead"] == 0:
             raise ValueError(f'dead = {data["dead"]} may not be zero')
         if data["conv"] > 7000 or data["conv"] < 200:
-            raise ValueError(f'conv = {data["conv"]} is outside the expected sensitivity window')
+            raise ValueError(f'conv = {data["conv"]} outside expected range')
         if data["unk4"] != 0xFFFFFFFF:
-            raise ValueError(f'unk4 = {data["unk4"]} was expected to be all 1s')
+            raise ValueError(f'unk4 = {data["unk4"]} but expected all 1s')
 
 
 class RadAlertLE:
@@ -291,11 +302,13 @@ class RadAlertLE:
     things don't work right. Its kinda like X is "execute last command"
     (or ack if no last command), aside from that last observation...
     """
+    # yapf: disable
     _COMMAND_STRING: Dict[str, str] = {
         "query":     "?",
         "terminate": "Z",
         "ack":       "X",
     }
+    # yapf: enable
     _COMMAND_ENDL: str = "\n"
 
     def _reset(self) -> None:
@@ -306,8 +319,14 @@ class RadAlertLE:
         self._last_id: Optional[int] = None
         self._sync_count: int = 0
 
-    def __init__(self, packet_callback: Callable[[Union[RadAlertLEStatus, RadAlertLEQuery]], None]) -> None:
-        self.packet_callback: Callable[[Union[RadAlertLEStatus, RadAlertLEQuery]], None] = packet_callback
+    def __init__(
+        self,
+        packet_callback: Callable[[Union[RadAlertLEStatus, RadAlertLEQuery]],
+                                  None]
+    ) -> None:
+        self.packet_callback: \
+            Callable[[Union[RadAlertLEStatus, RadAlertLEQuery]],
+                     None] = packet_callback
         self._peripheral = None
         self._reset()
 
@@ -317,8 +336,8 @@ class RadAlertLE:
     def connect(self, address: str) -> None:
         self.disconnect()
         self._peripheral = Peripheral(address)
-        #info_service = DeviceInfoService(self._peripheral)
-        #print(info_service.get_information())
+        # info_service = DeviceInfoService(self._peripheral)
+        # print(info_service.get_information())
         self._service = TransparentService(self._peripheral, self._on_receive)
 
     def disconnect(self) -> None:
@@ -357,7 +376,8 @@ class RadAlertLE:
                 iteration += 1
                 if iteration % 5 == 0:
                     self.trigger_query()
-            print("Timeout while waiting for BLE notification", file=sys.stderr)
+            print("Timeout while waiting for BLE notification",
+                  file=sys.stderr)
 
     def _decode(self) -> Union[None, RadAlertLEQuery, RadAlertLEStatus]:
         if len(self._receive_buffer) < 16:
@@ -374,7 +394,7 @@ class RadAlertLE:
                 if (self._last_id + 1) % 256 != data.id:
                     last_id: int = self._last_id
                     self._last_id = None
-                    raise ValueError(f'Packet ID has jumped from {last_id} to {data.id}')
+                    raise ValueError(f'Packet ID jump: {last_id} to {data.id}')
             self._last_id = data.id
         return data
 
@@ -394,7 +414,10 @@ class RadAlertLE:
                 data = self._decode()
                 self._receive_buffer = self._receive_buffer[16:]
             except Exception as e:
-                print(f"Failed to parse from: {self._receive_buffer.hex()}\n{e}", file=sys.stderr)
+                print(
+                    "Failed to parse from:"
+                    f"{self._receive_buffer.hex()}\n{e}",
+                    file=sys.stderr)
                 self._desynchronize()
 
             self._send_ack()

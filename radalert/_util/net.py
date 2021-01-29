@@ -23,7 +23,10 @@ class Gmcmap:
         self.account_id: str = account_id
         self.geiger_id: str = geiger_id
 
-    def send_values(self, cpm: Optional[float] = None, acpm: Optional[float] = None, usv: Optional[float] = None) -> None:
+    def send_values(self,
+                    cpm: Optional[float] = None,
+                    acpm: Optional[float] = None,
+                    usv: Optional[float] = None) -> None:
         """
         Send the log data to the service.
         """
@@ -46,7 +49,8 @@ class Radmon:
     """
     Simple class to upload logging data to the Radmon service.
 
-    API Docs: https://radmon.org/index.php/forum/howtos-and-faqs/864-radmon-org-api
+    API Docs: https://radmon.org/index.php/forum/howtos-and-faqs\
+    /864-radmon-org-api
     """
 
     _URL: str = "http://radmon.org/radmon.php?"
@@ -55,7 +59,10 @@ class Radmon:
         self.account_id: str = account_id
         self.geiger_id: str = geiger_id
 
-    def send_values(self, cpm, unixtime: float = None, latlon: Tuple[float, float] = None):
+    def send_values(self,
+                    cpm,
+                    unixtime: float = None,
+                    latlon: Tuple[float, float] = None):
         """
         Send the log data to the service.
         """
@@ -84,24 +91,34 @@ class URadMonitor:
     API documentation: https://www.hackster.io/radhoo/simple-iot-14efa1
 
     API headers:
-      * https://github.com/radhoo/uradmonitor_kit1/blob/master/code/misc/expProtocol.h
-      * https://github.com/radhoo/uradmonitor_kit1/blob/master/code/geiger/detectors.h
+      * https://github.com/radhoo/uradmonitor_kit1/blob/master/code/\
+        misc/expProtocol.h
+      * https://github.com/radhoo/uradmonitor_kit1/blob/master/code/\
+        geiger/detectors.h
     """
 
     _URL: str = "http://data.uradmonitor.com/api/v1/upload/exp/"
 
+    # yapf: disable
     _TUBE: Dict[str, int] = {
-        'unknown': 0, 'SBM-20': 1, 'SI-29BG': 2, 'SBM-19': 3,
-        'LND-712': 4, 'SBM-20M': 5, 'SI-22G': 6, 'STS-5': 7,
-        'SI-3BG': 8, 'SBM-21': 9, 'SBT-9': 10, 'SI-1G': 11,
-        'SI-8B': 12, 'SBT-10A': 13,
+        'unknown': 0, 'SBM-20':   1, 'SI-29BG': 2, 'SBM-19': 3,
+        'LND-712': 4, 'SBM-20M':  5, 'SI-22G':  6, 'STS-5':  7,
+        'SI-3BG':  8, 'SBM-21':   9, 'SBT-9':  10, 'SI-1G': 11,
+        'SI-8B':  12, 'SBT-10A': 13,
     }
 
     _PARAM: Dict[str, int] = {
-        'time': 1, 'cpm': 11, 'hwver': 14, 'fwver': 15, 'tube':  16,
+        'time': 1, 'cpm': 11, 'hwver': 14, 'fwver': 15, 'tube': 16,
     }
+    # yapf: enable
 
-    def __init__(self, user_id: str, user_hash: str, device_id: str, hwver: Optional[str] = None, fwver: Optional[str] = None, tube: Optional[str] = None):
+    def __init__(self,
+                 user_id: str,
+                 user_hash: str,
+                 device_id: str,
+                 hwver: Optional[str] = None,
+                 fwver: Optional[str] = None,
+                 tube: Optional[str] = None):
         self.user_id: str = user_id
         self.user_hash: str = user_hash
         self.device_id: str = device_id
@@ -110,12 +127,14 @@ class URadMonitor:
         if tube is None:
             self.tube = URadMonitor._TUBE["unknown"]
         else:
-            self.tube = URadMonitor._TUBE.get(tube, URadMonitor._TUBE["unknown"])
+            self.tube = URadMonitor._TUBE.get(tube,
+                                              URadMonitor._TUBE["unknown"])
 
     def send_values(self, cpm: float, unixtime: Optional[float] = None):
         if unixtime is None:
             unixtime = time.time()
 
+        # yapf: disable
         headers: Dict[str, str] = {
             'X-User-id':   self.user_id,
             'X-User-hash': self.user_hash,
@@ -127,6 +146,8 @@ class URadMonitor:
             URadMonitor._PARAM['cpm']:   f'{cpm:.2f}',
             URadMonitor._PARAM['tube']:  f'{self.tube}',
         }
+        # yapf: enable
+
         if self.hwver is not None:
             params[URadMonitor._PARAM['hwver']] = self.hwver
         if self.fwver is not None:
