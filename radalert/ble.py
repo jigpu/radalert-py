@@ -115,13 +115,14 @@ class RadAlertLEStatus:
         return info[0]
 
     @property
-    def _unknown(self) -> Tuple[Tuple[int, int]]:
+    def _unknown(self) -> Tuple[Tuple[int, int], Tuple[int, int]]:
         """
         Get the unknown data contained within the packet.
 
-        This is either a 2-bit value or two flag bits.
+        The first value is either a 2-bit value or two flag bits.
+        The second value is a single byte long.
         """
-        return ((self._data["unknown"], 0), )
+        return ((self._data["unknown"], 0), (self._data["unk1"], 0))
 
     @staticmethod
     def unpack(bytestr: bytes) -> Dict[str, Union[int, bool]]:
@@ -135,17 +136,24 @@ class RadAlertLEStatus:
           * cps:    Number of counts measured in the last second
           * value:  Value currently displayed on screen (scaled)
           * mode:   Device's current mode number (affects meaning of "value")
-          * cpm:    Current average counts per minute
+          * unk1:   Unknown value, usually 0. Have seen 0x15 before.
           * id:     8-bit counter which increments with each packet
+          * cpm:    Current average counts per minute
           * power:  Battery level / charging indication
           * alarm_active:   Flag: radiation alarm has been tripped
           * alarm_set:      Flag: radiation alarm is set
           * alarm_silenced: Flag: radiation alarm has been silenced
           * unknown: 2-bit value or pair of flags with unknown purpose
         """
-        keys = ("cps", "value", "mode", "cpm", "status", "id")
-        values = struct.unpack("<2IHI2B", bytestr)
+        keys = ("cps", "value", "mode", "cpm_lo", "cpm_hi", "unk1", "status",
+                "id")
+        values = struct.unpack("<2IHHB3B", bytestr)
         data = dict(zip(keys, values))
+
+        # Merge the two CPM sub-fields into a single 3-byte value
+        data["cpm"] = data["cpm_lo"] + (data["cpm_hi"] << 16)
+        del data["cpm_lo"]
+        del data["cpm_hi"]
 
         # Unpack the status byte into its individual fields
         status = data["status"]
@@ -176,8 +184,10 @@ class RadAlertLEStatus:
             raise ValueError(
                 f'cps = {data["cps"]} is unreasonably large or negative')
 
-        if data["cpm"] > 7500 * 100 * 60 or data["cpm"] < 0:
-            # Same logic as for cps, multiplied by 60
+        if data["cpm"] > 7500 * 60 or data["cpm"] < 0:
+            # Only three bytes appear to be available for CPM, so 100x
+            # would not fit. Limit this to just just the maximum times
+            # 60 (to transform into CPM)
             raise ValueError(
                 f'cpm = {data["cpm"]} is unreasonably large or negative')
 
