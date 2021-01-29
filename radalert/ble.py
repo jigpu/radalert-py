@@ -115,13 +115,13 @@ class RadAlertLEStatus:
         return info[0]
 
     @property
-    def _unknown(self) -> int:
+    def _unknown(self) -> Tuple[Tuple[int, int]]:
         """
         Get the unknown data contained within the packet.
 
         This is either a 2-bit value or two flag bits.
         """
-        return self._data["unknown"]
+        return ((self._data["unknown"], 0), )
 
     @staticmethod
     def unpack(bytestr: bytes) -> Dict[str, Union[int, bool]]:
@@ -230,7 +230,8 @@ class RadAlertLEQuery:
         return 1 / self._data["dead"]
 
     @property
-    def _unknown(self) -> Tuple[int, int, int]:
+    def _unknown(
+            self) -> Tuple[Tuple[int, int], Tuple[int, int], Tuple[int, int]]:
         """
         Get the unknown data contained within the packet.
 
@@ -238,7 +239,8 @@ class RadAlertLEQuery:
         in the packet. Since they are unknown, their data boundaries
         are not necessarily correct...
         """
-        return (self._data["unk1"], self._data["unk2"], self._data["unk4"])
+        return ((self._data["unk1"], 0xFFFFFFFF), (self._data["unk2"], 0),
+                (self._data["unk4"], 0xFFFFFFFF))
 
     @staticmethod
     def unpack(bytestr: bytes) -> Dict[str, int]:
@@ -265,18 +267,12 @@ class RadAlertLEQuery:
 
     @staticmethod
     def _validate(data: Dict[str, int]) -> None:
-        if data["unk1"] != 0xFFFFFFFF:
-            raise ValueError(f'unk1 = {data["unk1"]} but expected all 1s')
         if data["alarm"] > 235400 or data["alarm"] < 0:
             raise ValueError(f'alarm = {data["alarm"]} outside expected range')
-        if data["unk2"] != 0:
-            raise ValueError(f'unk2 = {data["unk2"]} was expected to be zero')
         if data["dead"] == 0:
             raise ValueError(f'dead = {data["dead"]} may not be zero')
         if data["conv"] > 7000 or data["conv"] < 200:
             raise ValueError(f'conv = {data["conv"]} outside expected range')
-        if data["unk4"] != 0xFFFFFFFF:
-            raise ValueError(f'unk4 = {data["unk4"]} but expected all 1s')
 
 
 class RadAlertLE:
@@ -395,7 +391,18 @@ class RadAlertLE:
                     last_id: int = self._last_id
                     self._last_id = None
                     raise ValueError(f'Packet ID jump: {last_id} to {data.id}')
+
             self._last_id = data.id
+
+        if data is not None:
+            for value, expect in data._unknown:
+                if value != expect:
+                    print(
+                        f'NOTE: Data parsed from {self._receive_buffer.hex()}'
+                        ' has unexpected unknown field values.',
+                        file=sys.stderr)
+                    break
+
         return data
 
     def _on_receive(self, bytestr: bytes) -> None:
