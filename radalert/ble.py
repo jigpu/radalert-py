@@ -37,7 +37,9 @@ class RadAlertLEStatus:
     # yapf: enable
 
     class AlarmState(Enum):
-        """Enumeration of possible alarm states."""
+        """
+        Enumeration of possible alarm states.
+        """
         DISABLED = 1
         SET = 2
         ALERTING = 3
@@ -53,33 +55,45 @@ class RadAlertLEStatus:
 
     @property
     def cps(self) -> int:
-        """Get the number of counts observed in the last second."""
+        """
+        Number of counts observed in the last second.
+        """
         return self._data["cps"]
 
     @property
     def cpm(self) -> float:
-        """Get the average number of counts per minute."""
+        """
+        Average number of counts per minute.
+        """
         return self._data["cpm"]
 
     @property
     def id(self) -> int:
-        """Get the rolling ID number of this packet."""
+        """
+        Rolling ID number of this packet.
+        """
         return self._data["id"]
 
     @property
     def is_charging(self) -> bool:
-        """Get a bool indicating if the device is charging."""
+        """
+        Flag indicating if the device is charging.
+        """
         return self._data["power"] == 5
 
     @property
     def battery_percent(self) -> Optional[float]:
-        """Get the battery percentage, or None if not available."""
+        """
+        Battery percentage, or None if not available.
+        """
         return None if self.is_charging else \
             self._data["power"] / 4 * 100
 
     @property
     def alarm_state(self) -> AlarmState:
-        """Get the current alarm state."""
+        """
+        Current device alarm state (disabled, set, alerting, etc.)
+        """
 
         # This chain of conditions must be kept in priority order
         if self._data["alarm_silenced"]:
@@ -94,7 +108,7 @@ class RadAlertLEStatus:
     @property
     def display_value(self) -> float:
         """
-        Get the on-screen value being displayed in the current mode.
+        Value being displayed on screen in the current mode.
 
         See also: display_units()
         """
@@ -106,7 +120,7 @@ class RadAlertLEStatus:
     @property
     def display_units(self) -> str:
         """
-        Get the units associated with the current mode.
+        Units associated with the current mode.
 
         See also: display_value()
         """
@@ -117,12 +131,14 @@ class RadAlertLEStatus:
     @property
     def _unknown(self) -> List[Tuple[int, int]]:
         """
-        Get the unknown data contained within the packet.
-
-        The first value is either a 2-bit value or two flag bits.
-        The second value is a single byte long.
+        Unknown data contained within the packet.
         """
-        return [(self._data["unknown"], 0), (self._data["unk1"], 0)]
+        # yapf: disable
+        return [
+            (self._data["unknown"], 0),  # 2-bit value or 2 flags?
+            (self._data["unk1"], 0),     # 1-byte value?
+        ]
+        # yapf: enable
 
     @staticmethod
     def unpack(bytestr: bytes) -> Dict[str, Union[int, bool]]:
@@ -173,6 +189,9 @@ class RadAlertLEStatus:
 
     @staticmethod
     def _validate(data: Dict[str, Union[int, bool]]) -> None:
+        """
+        Check that the unpacked dictionary data is reasonable.
+        """
         if data["cps"] > 7500 * 100 or data["cps"] < 0:
             # It isn't clear what the maximum value actually is, but the
             # manual says that the devices won't saturate in a field
@@ -219,13 +238,15 @@ class RadAlertLEQuery:
 
     @property
     def alarm_level(self) -> int:
-        """Get the current alarm level in CPS (even if alarm is disabled)."""
+        """
+        Current alarm level in CPS (even if alarm is disabled).
+        """
         return self._data["alarm"]
 
     @property
     def conversion_factor(self) -> float:
         """
-        Get the conversion factor from CPM to mR/h.
+        Conversion factor from CPM to mR/h.
 
         Divide a CPM count by this value to transform it into an
         approximate dose rate in mR/h.
@@ -235,21 +256,22 @@ class RadAlertLEQuery:
     @property
     def deadtime(self) -> float:
         """
-        Get the tube deadtime in seconds.
+        Tube deadtime in seconds.
         """
         return 1 / self._data["dead"]
 
     @property
     def _unknown(self) -> List[Tuple[int, int]]:
         """
-        Get the unknown data contained within the packet.
-
-        This is a tuple of unknown values in the order they are found
-        in the packet. Since they are unknown, their data boundaries
-        are not necessarily correct...
+        Unknown data contained within the packet.
         """
-        return [(self._data["unk1"], 0xFFFFFFFF), (self._data["unk2"], 0),
-                (self._data["unk4"], 0xFFFFFFFF)]
+        # yapf: disable
+        return [
+            (self._data["unk1"], 0xFFFFFFFF),  # Packet header?
+            (self._data["unk2"], 0),           # 2-byte value?
+            (self._data["unk4"], 0xFFFFFFFF),  # Packet trailer?
+        ]
+        # yapf: enable
 
     @staticmethod
     def unpack(bytestr: bytes) -> Dict[str, int]:
@@ -276,10 +298,15 @@ class RadAlertLEQuery:
 
     @staticmethod
     def _validate(data: Dict[str, int]) -> None:
+        """
+        Check that the unpacked dictionary data is reasonable.
+        """
         if data["alarm"] > 235400 or data["alarm"] < 0:
             raise ValueError(f'alarm = {data["alarm"]} outside expected range')
+
         if data["dead"] == 0:
             raise ValueError(f'dead = {data["dead"]} may not be zero')
+
         if data["conv"] > 7000 or data["conv"] < 200:
             raise ValueError(f'conv = {data["conv"]} outside expected range')
 
