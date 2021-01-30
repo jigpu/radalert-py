@@ -115,14 +115,14 @@ class RadAlertLEStatus:
         return info[0]
 
     @property
-    def _unknown(self) -> Tuple[Tuple[int, int], Tuple[int, int]]:
+    def _unknown(self) -> List[Tuple[int, int]]:
         """
         Get the unknown data contained within the packet.
 
         The first value is either a 2-bit value or two flag bits.
         The second value is a single byte long.
         """
-        return ((self._data["unknown"], 0), (self._data["unk1"], 0))
+        return [(self._data["unknown"], 0), (self._data["unk1"], 0)]
 
     @staticmethod
     def unpack(bytestr: bytes) -> Dict[str, Union[int, bool]]:
@@ -240,8 +240,7 @@ class RadAlertLEQuery:
         return 1 / self._data["dead"]
 
     @property
-    def _unknown(
-            self) -> Tuple[Tuple[int, int], Tuple[int, int], Tuple[int, int]]:
+    def _unknown(self) -> List[Tuple[int, int]]:
         """
         Get the unknown data contained within the packet.
 
@@ -249,8 +248,8 @@ class RadAlertLEQuery:
         in the packet. Since they are unknown, their data boundaries
         are not necessarily correct...
         """
-        return ((self._data["unk1"], 0xFFFFFFFF), (self._data["unk2"], 0),
-                (self._data["unk4"], 0xFFFFFFFF))
+        return [(self._data["unk1"], 0xFFFFFFFF), (self._data["unk2"], 0),
+                (self._data["unk4"], 0xFFFFFFFF)]
 
     @staticmethod
     def unpack(bytestr: bytes) -> Dict[str, int]:
