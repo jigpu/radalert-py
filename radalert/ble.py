@@ -435,7 +435,8 @@ class RadAlertLE:
                 if value != expect:
                     print(
                         f'NOTE: Data parsed from {self._receive_buffer.hex()}'
-                        ' has unexpected unknown field values.',
+                        ' has unexpected unknown field values:'
+                        f' {data._unknown}',
                         file=sys.stderr)
                     break
 
