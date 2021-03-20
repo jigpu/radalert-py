@@ -1,5 +1,4 @@
 #!/usr/bin/env python3
-
 """
 Example of a simple logging program which uses the radalert API.
 
@@ -49,10 +48,11 @@ def spin(device):
     disconnection.
     """
     try:
-        device.spin() # Infinite loop
+        device.spin()  # Infinite loop
     except (BTLEDisconnectError, BTLEException) as e:
         print(e, file=sys.stderr)
     device.disconnect()
+
 
 def scan(seconds):
     """
@@ -65,10 +65,11 @@ def scan(seconds):
     results = []
     entries = Scanner().scan(seconds)
     for entry in entries:
-        name = entry.getValueText(9) # "Complete Local Name"
+        name = entry.getValueText(9)  # "Complete Local Name"
         if name is not None and "Mon200" in name:
             results.append(entry.addr)
     return results
+
 
 def find_any():
     """
@@ -84,6 +85,7 @@ def find_any():
         addrs = scan(3)
     return addrs[0]
 
+
 def main():
     """
     Start the logging example.
@@ -98,7 +100,7 @@ def main():
     backend = LogBackend()
 
     console_log = ConsoleLogger(backend)
-    console_thread = Thread(target = console_log.spin, daemon=True)
+    console_thread = Thread(target=console_log.spin, daemon=True)
     console_thread.start()
 
     # Set up logging to the GMC.MAP service. Be sure to fill in the IDs!
@@ -128,5 +130,6 @@ def main():
         spin(device)
         time.sleep(3)
 
-if __name__=="__main__":
+
+if __name__ == "__main__":
     main()

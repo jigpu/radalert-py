@@ -11,7 +11,6 @@ import sys
 import threading
 from datetime import datetime
 
-
 from radalert.ble import RadAlertLEStatus
 from radalert.ble import RadAlertLEQuery
 from radalert._util.filter import FIRFilter
@@ -44,9 +43,9 @@ class ConsoleLogger:
 
             actual = self.backend.actuals.value
 
-            avg_short  = self.backend.averages[0].value * 60
+            avg_short = self.backend.averages[0].value * 60
             avg_medium = self.backend.averages[1].value * 60
-            avg_long   = self.backend.averages[2].value * 60
+            avg_long = self.backend.averages[2].value * 60
 
             maximum = self.backend.maximum.value * 60
             minimum = self.backend.minimum.value * 60
@@ -200,7 +199,8 @@ class RadmonLogger:
 
             self.send_values(avg_short)
         except Exception as e:
-            print(f"Unable to send values to radmon server: {e}", file=sys.stderr)
+            print(f"Unable to send values to radmon server: {e}",
+                  file=sys.stderr)
 
     def send_values(self, cpm):
         """
@@ -234,8 +234,10 @@ class LogBackend:
 
     Keeps track of various statistics and device state for loggers.
     """
-
-    def __init__(self, actual_samples=60, average_samples=(300,43200,7776000), minmax_samples=300):
+    def __init__(self,
+                 actual_samples=60,
+                 average_samples=(300, 43200, 7776000),
+                 minmax_samples=300):
         """
         Create a new logger with the given properties.
         """
@@ -269,7 +271,7 @@ class LogBackend:
             self._on_query(data)
 
     def _on_data(self, data):
-        self.last_update=datetime.now()
+        self.last_update = datetime.now()
         cps = data.cps
 
         self.battery = data.battery_percent
