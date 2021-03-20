@@ -404,7 +404,7 @@ class RadAlertLE:
             raise RuntimeError("Peripheral has not been initialized")
         while True:
             iteration: int = 0
-            while self._peripheral.waitForNotifications(4.0):
+            while self._peripheral.waitForNotifications(8.5):
                 iteration += 1
                 if iteration % 5 == 0:
                     self.trigger_query()
