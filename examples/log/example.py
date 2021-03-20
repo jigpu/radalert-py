@@ -36,24 +36,6 @@ from bluepy.btle import BTLEException
 from radalert.ble import RadAlertLE
 
 
-def spin(device):
-    """
-    Connect to the given address and begin spinning for data.
-
-    This method creates a device with the given address, setting
-    up a connection to it. If all goes well, we then call the
-    device's spin method to continuously get events.
-
-    This function only returns in the case of an error or
-    disconnection.
-    """
-    try:
-        device.spin()  # Infinite loop
-    except (BTLEDisconnectError, BTLEException) as e:
-        print(e, file=sys.stderr)
-    device.disconnect()
-
-
 def scan(seconds):
     """
     Scan for a Monitor200 geiger counter.
@@ -124,11 +106,12 @@ def main():
         try:
             print("Connecting to {}".format(address), file=sys.stderr)
             device.connect(address)
-        except (BTLEDisconnectError, BTLEException) as e:
+            device.spin()
+        except (BTLEDisconnectError, BTLEException, BrokenPipeError) as e:
             print(e, file=sys.stderr)
-            continue
-        spin(device)
-        time.sleep(3)
+        finally:
+            device.disconnect()
+            time.sleep(3)
 
 
 if __name__ == "__main__":
