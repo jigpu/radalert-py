@@ -12,14 +12,16 @@ state is good enough for most basic work :)
 
 import sys
 import struct
+import datetime
 from enum import Enum
 from typing import Callable, Dict, List, NoReturn, Optional, Tuple, Union
 from bluepy.btle import Peripheral
 
+from radalert import generic
 from radalert._util.ble import TransparentService
 
 
-class RadAlertLEStatus:
+class RadAlertLEStatus(generic.RadAlertStatus):
     """
     Representation of a status packet from a RadAlertLE device.
 
@@ -35,15 +37,6 @@ class RadAlertLEStatus:
         23: ("mR/h",   lambda x: x/1000),  # uR/h -> mR/h
     }
     # yapf: enable
-
-    class AlarmState(Enum):
-        """
-        Enumeration of possible alarm states.
-        """
-        DISABLED = 1
-        SET = 2
-        ALERTING = 3
-        SILENCED = 4
 
     def __init__(self, bytestr: bytes) -> None:
         """
@@ -90,7 +83,7 @@ class RadAlertLEStatus:
             self._data["power"] / 4 * 100
 
     @property
-    def alarm_state(self) -> AlarmState:
+    def alarm_state(self) -> generic.RadAlertStatus.AlarmState:
         """
         Current device alarm state (disabled, set, alerting, etc.)
         """
@@ -223,7 +216,7 @@ class RadAlertLEStatus:
             raise ValueError(f'mode = {data["mode"]} is not a known state')
 
 
-class RadAlertLEQuery:
+class RadAlertLEQuery(generic.RadAlertQuery):
     """
     Representation of a query packet from a RadAlertLE device.
 
@@ -237,11 +230,66 @@ class RadAlertLEQuery:
         self.type: str = "query"
 
     @property
+    def alarm_is_set(self) -> bool:
+        """
+        Flag indicating if the device's alarm has been set.
+        """
+        raise NotImplementedError("Alarm flag is not available")
+
+    @property
+    def auto_averaging_enabled(self) -> bool:
+        """
+        Flag indicating if the device's auto-averaging mode is enabled.
+
+        Auto-averaging mode causes the device to change its averaging
+        time depending on recent raditation levels. The device manual
+        will specify the averaging times and levels. When disabled,
+        averaging may still be present, but will not be automatically
+        adjusted.
+        """
+        raise NotImplementedError("Auto averaging flag is not available")
+
+    @property
     def alarm_level(self) -> int:
         """
         Current alarm level in CPS (even if alarm is disabled).
         """
         return self._data["alarm"]
+
+    @property
+    def audible_beeps(self) -> bool:
+        """
+        Flag indicatating if the device will produce audible beeps.
+        """
+        raise NotImplementedError("Audible beep flag is not available")
+
+    @property
+    def audible_clicks(self) -> bool:
+        """
+        Flag indicating if the device will produce audible detection clicks.
+        """
+        raise NotImplementedError("Audible click flag is not available")
+
+    @property
+    def backlight_duration(self) -> int:
+        """
+        Number of seconds that the backlight will remain on.
+        """
+        raise NotImplementedError("Backlight duration is not available")
+
+    @property
+    def calibration_date(self) -> Optional[datetime.datetime]:
+        """
+        Date of last calibration, or None if not set.
+        """
+        raise NotImplementedError("Calibration date is not available")
+
+    @property
+    def contrast(self) -> float:
+        """
+        Display contrast percentage.
+        """
+        raise NotImplementedError("Contrast is not available")
 
     @property
     def conversion_factor(self) -> float:
@@ -254,11 +302,46 @@ class RadAlertLEQuery:
         return self._data["conv"]
 
     @property
+    def count_duration(self) -> int:
+        """
+        Number of seconds the device will perform a timed count for.
+        """
+        raise NotImplementedError("Count duration is not available")
+
+    @property
+    def datalog_enabled(self) -> bool:
+        """
+        Flag indicating if the datalog function is enabled.
+        """
+        raise NotImplementedError("Datalog enabled flag is not available")
+
+    @property
+    def datalog_interval(self) -> int:
+        """
+        Number of minutes between datalog samples.
+        """
+        raise NotImplementedError("Datalog interval is not available")
+
+    @property
+    def datalog_is_circular(self) -> bool:
+        """
+        Flag indicating if the datalog writes to a circular buffer.
+        """
+        raise NotImplementedError("Datalog circular flag is not available")
+
+    @property
     def deadtime(self) -> float:
         """
         Tube deadtime in seconds.
         """
         return 1 / self._data["dead"]
+
+    @property
+    def serial_number(self) -> int:
+        """
+        Serial number of the device.
+        """
+        raise NotImplementedError("Serial number is not available")
 
     @property
     def _unknown(self) -> List[Tuple[int, int]]:
@@ -311,7 +394,7 @@ class RadAlertLEQuery:
             raise ValueError(f'conv = {data["conv"]} outside expected range')
 
 
-class RadAlertLE:
+class RadAlertLE(generic.RadAlert):
     """
     Bluetooth LE client implementation for the Radiation Alert series
     of devices from SE International.
