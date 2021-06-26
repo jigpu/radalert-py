@@ -1,18 +1,16 @@
 """
 A set of logging classes for use with the RadAlertLE class.
 
-The RadAlertLE class requires you to give it a callback function that
+The RadAlertLE class requires you to give it callback functions that
 will be called whenever new data is available from the geiger counter.
 This module provides a basic logging class that can be hooked up to
-the callback to provide a basic console logging program.
+the callbacks to provide a basic console logging program.
 """
 
 import sys
 import threading
 from datetime import datetime
 
-from radalert.ble import RadAlertLEStatus
-from radalert.ble import RadAlertLEQuery
 from radalert._util.filter import FIRFilter
 from radalert._util.filter import IIRFilter
 from radalert._util.net import Gmcmap
@@ -258,17 +256,25 @@ class LogBackend:
         self.maximum = FIRFilter(minmax_samples, max)
         self.minimum = FIRFilter(minmax_samples, min)
 
-    def radalert_le_callback(self, data):
+    def radalert_status_callback(self, data):
         """
-        Update internal state whenever a RadAlertLE has new data.
+        Update internal logger state in response to status updates.
 
-        This is a callback that should be given to the RadAlertLE object
-        so that we can be informed whenever new data is available.
+        This callback should be given to the e.g. RadAlertLE object when
+        it is created so that we can be periodically informed of status
+        updates from the RadAlert device.
         """
-        if isinstance(data, RadAlertLEStatus):
-            self._on_data(data)
-        elif isinstance(data, RadAlertLEQuery):
-            self._on_query(data)
+        self._on_data(data)
+
+    def radalert_query_callback(self, data):
+        """
+        Update internal logger state in response to query updates.
+
+        This callback should be given to the e.g. RadAlertLE object when
+        it is created so that we can be informed of the RadAlert device's
+        response to any query requests.
+        """
+        self._on_query(data)
 
     def _on_data(self, data):
         self.last_update = datetime.now()

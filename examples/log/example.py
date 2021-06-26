@@ -96,7 +96,8 @@ def main():
     #radmon_thread.start()
 
     # Keep attempting to reconnect if anything goes wrong
-    device = RadAlertLE(backend.radalert_le_callback)
+    device = RadAlertLE(backend.radalert_status_callback,
+                        backend.radalert_query_callback)
     while True:
         if len(sys.argv) == 1:
             address = find_any()

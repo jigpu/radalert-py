@@ -434,14 +434,12 @@ class RadAlertLE(generic.RadAlert):
         self._last_id: Optional[int] = None
         self._sync_count: int = 0
 
-    def __init__(
-        self,
-        packet_callback: Callable[[Union[RadAlertLEStatus, RadAlertLEQuery]],
-                                  None]
-    ) -> None:
-        self.packet_callback: \
-            Callable[[Union[RadAlertLEStatus, RadAlertLEQuery]],
-                     None] = packet_callback
+    def __init__(self, status_callback: Callable[[RadAlertLEStatus], None],
+                 query_callback: Callable[[RadAlertLEQuery], None]) -> None:
+        self.status_callback: \
+            Callable[[RadAlertLEStatus], None] = status_callback
+        self.query_callback: \
+            Callable[[RadAlertLEQuery], None] = query_callback
         self._peripheral = None
         self._reset()
 
@@ -548,8 +546,10 @@ class RadAlertLE(generic.RadAlert):
                 self._desynchronize()
 
             self._send_ack()
-            if data is not None:
-                self.packet_callback(data)
+            if isinstance(data, RadAlertLEStatus):
+                self.status_callback(data)
+            elif isinstance(data, RadAlertLEQuery):
+                self.query_callback(data)
             else:
                 break
 
