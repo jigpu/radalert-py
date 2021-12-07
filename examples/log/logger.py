@@ -39,26 +39,18 @@ class ConsoleLogger:
             if update_delay.total_seconds() > self.delay:
                 return ""
 
-            actual = self.backend.actuals.value
-
-            avg_short = self.backend.averages[0].value * 60
-            avg_medium = self.backend.averages[1].value * 60
-            avg_long = self.backend.averages[2].value * 60
-
-            maximum = self.backend.maximum.value * 60
-            minimum = self.backend.minimum.value * 60
-
-            table = (
+            table = [
                 f"{datetime.now().strftime('%Y-%m-%d %H:%M:%S')}",
-                f"{self.backend.battery}%",
-                f"{self.backend.conversion}",
-                f"{actual}",
-                f"{avg_short:.2f}",
-                f"{avg_medium:.2f}",
-                f"{avg_long:.2f}",
-                f"{maximum:.2f}",
-                f"{minimum:.2f}",
-            )
+                f"{self.backend.battery}%", f"{self.backend.conversion}"
+            ]
+
+            for f in self.backend.averages:
+                total = f.value
+                average = f.value / len(f.values) * 60
+                table.extend([
+                    f"{total}",
+                    f"{average:.1f}",
+                ])
 
             return "\t".join(table)
         except:
@@ -77,23 +69,13 @@ class ConsoleLogger:
             time /= 24
             return (time, "d")
 
-        ts_actual = timespan(self.backend.actual_samples)
-        ts_short = timespan(self.backend.average_samples[0])
-        ts_medium = timespan(self.backend.average_samples[1])
-        ts_long = timespan(self.backend.average_samples[2])
-        ts_minmax = timespan(self.backend.minmax_samples)
-
-        table = (
-            "time",
-            "battery",
-            "cpm/(mR/h)",
-            f"{ts_actual[0]}{ts_actual[1]}-count",
-            f"{ts_short[0]}{ts_short[1]}-avg-cpm",
-            f"{ts_medium[0]}{ts_medium[1]}-avg-cpm",
-            f"{ts_long[0]}{ts_long[1]}-avg-cpm",
-            f"{ts_minmax[0]}{ts_minmax[1]}-max-cpm",
-            f"{ts_minmax[0]}{ts_minmax[1]}-min-cpm",
-        )
+        table = ["time", "battery", "cpm/(mR/h)"]
+        for f in self.backend.averages:
+            ts = timespan(f.size)
+            table.extend([
+                f"{ts[0]:.0f}{ts[1]}-cnt",
+                f"{ts[0]:.0f}{ts[1]}-cpm",
+            ])
         return "\t".join(table)
 
     def spin(self):
@@ -139,8 +121,10 @@ class GmcmapLogger:
             if update_delay.total_seconds() > self.delay:
                 return
 
-            avg_short = self.backend.averages[0].value * 60
-            avg_long = self.backend.averages[2].value * 60
+            avg_short = self.backend.averages[1].value / len(
+                self.backend.averages[1].values) * 60
+            avg_long = self.backend.averages[2].value / len(
+                self.backend.averages[2].values) * 60
             usv = avg_short / self.backend.conversion * 10
 
             self.send_values(avg_short, avg_long, usv)
@@ -193,9 +177,10 @@ class RadmonLogger:
             if update_delay.total_seconds() > self.delay:
                 return
 
-            avg_short = self.backend.averages[0].value * 60
+            avg_long = self.backend.averages[2].value / len(
+                self.backend.averages[2].values) * 60
 
-            self.send_values(avg_short)
+            self.send_values(avg_long)
         except Exception as e:
             print(f"Unable to send values to radmon server: {e}",
                   file=sys.stderr)
@@ -232,10 +217,7 @@ class LogBackend:
 
     Keeps track of various statistics and device state for loggers.
     """
-    def __init__(self,
-                 actual_samples=60,
-                 average_samples=(300, 43200, 7776000),
-                 minmax_samples=300):
+    def __init__(self, samples=[10, 60, 300, 3600]):
         """
         Create a new logger with the given properties.
         """
@@ -244,17 +226,9 @@ class LogBackend:
         self.conversion = None
         self.battery = 0
 
-        self.actual_samples = actual_samples
-        self.actuals = FIRFilter(actual_samples, sum)
-        self.average_samples = average_samples
-        self.averages = (
-            FIRFilter(average_samples[0]),
-            IIRFilter.create_from_time_constant(average_samples[1]),
-            IIRFilter.create_from_time_constant(average_samples[2]),
-        )
-        self.minmax_samples = minmax_samples
-        self.maximum = FIRFilter(minmax_samples, max)
-        self.minimum = FIRFilter(minmax_samples, min)
+        self.averages = []
+        for count in samples:
+            self.averages.append(FIRFilter(count, sum))
 
     def radalert_status_callback(self, data):
         """
@@ -282,29 +256,8 @@ class LogBackend:
 
         self.battery = data.battery_percent
 
-        # Do not initalize actual count with any kind of average
-        self.actuals.iterate(cps)
-
-        # Initialize averaging filters to the device average
-        if self.averages[0].value is None:
-            self.averages[0].iterate(data.cpm / 60)
-        if self.averages[1].value is None:
-            self.averages[1].iterate(data.cpm / 60)
-        if self.averages[2].value is None:
-            self.averages[2].iterate(data.cpm / 60)
-
-        self.averages[0].iterate(cps)
-        self.averages[1].iterate(cps)
-        self.averages[2].iterate(cps)
-
-        # Initialize the minmax filters to the device average
-        if len(self.maximum.values) == 0:
-            self.maximum.iterate(data.cpm / 60)
-        if len(self.maximum.values) == 0:
-            self.maximum.iterate(data.cpm / 60)
-
-        self.maximum.iterate(self.averages[0].value)
-        self.minimum.iterate(self.averages[0].value)
+        for f in self.averages:
+            f.iterate(cps)
 
     def _on_query(self, data):
         self.conversion = data.conversion_factor
