@@ -610,16 +610,16 @@ class RadAlertHID(generic.RadAlert):
 
         self._last_id = data.id
 
-        for value, expect in data._unknown:
-            if value != expect:
-                print(
-                    f'NOTE: Data parsed from {self._receive_buffer.hex()}'
-                    ' has unexpected unknown field values:'
-                    f' {data._unknown}',
-                    file=sys.stderr)
+        #for value, expect in data._unknown:
+        #    if value != expect:
+        #        print(
+        #            f'NOTE: Data parsed from {self._receive_buffer.hex()}'
+        #            ' has unexpected unknown field values:'
+        #            f' {data._unknown}',
+        #            file=sys.stderr)
 
         self._receive_buffer = b''
-        print(data._data)
+        #print(data._data)
         return data
 
     def _start(self) -> None:
