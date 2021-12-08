@@ -48,7 +48,7 @@ Afterwards, it will begin sampling data (for 30s at a time) and
 then printing the result to the console.
 
 ~~~
-$ PYTHONPATH=. ./examples/log/example-bt.py
+$ PYTHONPATH=. ./radmon/_examples/log/example_bt.py
 Scanning for Mon200 devices...
 time	battery	cpm/(mR/h)	60s-count	5.0m-avg-cpm	12.0h-avg-cpm	90.0d-avg-cpm	5.0m-max-cpm	5.0m-min-cpm
 Connecting to xx:xx:xx:xx:xx:xx

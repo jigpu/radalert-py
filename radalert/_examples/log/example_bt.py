@@ -24,10 +24,10 @@ import sys
 import time
 from threading import Thread
 
-from logger import ConsoleLogger
-from logger import LogBackend
-#from logger import GmcmapLogger
-#from logger import RadmonLogger
+from radalert._examples.log.logger import ConsoleLogger
+from radalert._examples.log.logger import LogBackend
+#from radalert._examples.log.logger import GmcmapLogger
+#from radalert._examples.log.logger import RadmonLogger
 
 from bluepy.btle import Scanner
 from bluepy.btle import BTLEDisconnectError
