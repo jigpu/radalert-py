@@ -20,14 +20,15 @@ will attempt to connect to that device directly without needing
 root rights.
 """
 
+import os
 import sys
 import time
 from threading import Thread
 
 from radalert._examples.log.logger import ConsoleLogger
 from radalert._examples.log.logger import LogBackend
-#from radalert._examples.log.logger import GmcmapLogger
-#from radalert._examples.log.logger import RadmonLogger
+from radalert._examples.log.logger import GmcmapLogger
+from radalert._examples.log.logger import RadmonLogger
 
 from bluepy.btle import Scanner
 from bluepy.btle import BTLEDisconnectError
@@ -85,15 +86,21 @@ def main():
     console_thread = Thread(target=console_log.spin, daemon=True)
     console_thread.start()
 
-    # Set up logging to the GMC.MAP service. Be sure to fill in the IDs!
-    #gmc_log = GmcmapLogger(backend, "--ID--", "--ID--")
-    #gmc_thread = Thread(target = gmc_log.spin, daemon=True)
-    #gmc_thread.start()
+    # Set up logging to the GMC.MAP service if env vars are set
+    gmcmap_acct_id = os.environ.get("GMCMAP_ACCT_ID", None)
+    gmcmap_gc_id = os.environ.get("GMCMAP_GC_ID", None)
+    if all(var is not None for var in [gmcmap_acct_id, gmcmap_gc_id]):
+        gmc_log = GmcmapLogger(backend, gmcmap_acct_id, gmcmap_gc_id)
+        gmc_thread = Thread(target=gmc_log.spin, daemon=True)
+        gmc_thread.start()
 
-    # Set up logging to the Radmon service. Be sure to fill in the user/pass!
-    #radmon_log = RadmonLogger(backend, "--USER--", "--PASSWORD--")
-    #radmon_thread = Thread(target = radmon_log.spin, daemon=True)
-    #radmon_thread.start()
+    # Set up logging to the Radmon service if env vars are set
+    radmon_user_id = os.environ.get("RADMON_USER_ID", None)
+    radmon_data_pw = os.environ.get("RADMON_DATA_PW", None)
+    if all(var is not None for var in [radmon_user_id, radmon_data_pw]):
+        radmon_log = RadmonLogger(backend, radmon_user_id, radmon_data_pw)
+        radmon_thread = Thread(target=radmon_log.spin, daemon=True)
+        radmon_thread.start()
 
     # Keep attempting to reconnect if anything goes wrong
     device = RadAlertLE(backend.radalert_status_callback,
