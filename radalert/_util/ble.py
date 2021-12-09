@@ -9,6 +9,7 @@ from typing import Callable, Dict
 
 from bluepy.btle import BTLEException
 from bluepy.btle import DefaultDelegate
+from bluepy.btle import Peripheral
 
 
 class DeviceInfoService:
@@ -42,18 +43,18 @@ class DeviceInfoService:
     _UUID_CHARACTERISTIC_SW_REVISION: str = \
         "00002a28-0000-1000-8000-00805f9b34fb"
 
-    def __init__(self, peripheral):
+    def __init__(self, peripheral: Peripheral) -> None:
         try:
             self._service = peripheral.getServiceByUUID(self._UUID_SERVICE)
         except (BTLEException, IndexError) as exception:
             raise BTLEException("DeviceInfo service not found") from exception
 
-    def _read_characteristic(self, uuid) -> str:
+    def _read_characteristic(self, uuid: str) -> bytes:
         try:
             char = self._service.getCharacteristics(forUUID=uuid)[0]
             return char.read()
         except (BTLEException, IndexError):
-            return ""
+            return b""
 
     def get_information(self) -> Dict[str, str]:
         """
@@ -66,23 +67,35 @@ class DeviceInfoService:
         """
         return {
             "manufacturer":
-            self._read_characteristic(
-                DeviceInfoService._UUID_CHARACTERISTIC_MANUFACTURER),
+            str(
+                self._read_characteristic(
+                    DeviceInfoService._UUID_CHARACTERISTIC_MANUFACTURER),
+                'UTF-8'),
             "model_number":
-            self._read_characteristic(
-                DeviceInfoService._UUID_CHARACTERISTIC_MODEL_NUMBER),
+            str(
+                self._read_characteristic(
+                    DeviceInfoService._UUID_CHARACTERISTIC_MODEL_NUMBER),
+                'UTF-8'),
             "serial_number":
-            self._read_characteristic(
-                DeviceInfoService._UUID_CHARACTERISTIC_SERIAL_NUMBER),
+            str(
+                self._read_characteristic(
+                    DeviceInfoService._UUID_CHARACTERISTIC_SERIAL_NUMBER),
+                'UTF-8'),
             "hw_revision":
-            self._read_characteristic(
-                DeviceInfoService._UUID_CHARACTERISTIC_HW_REVISION),
+            str(
+                self._read_characteristic(
+                    DeviceInfoService._UUID_CHARACTERISTIC_HW_REVISION),
+                'UTF-8'),
             "fw_revision":
-            self._read_characteristic(
-                DeviceInfoService._UUID_CHARACTERISTIC_FW_REVISION),
+            str(
+                self._read_characteristic(
+                    DeviceInfoService._UUID_CHARACTERISTIC_FW_REVISION),
+                'UTF-8'),
             "sw_revision":
-            self._read_characteristic(
-                DeviceInfoService._UUID_CHARACTERISTIC_SW_REVISION),
+            str(
+                self._read_characteristic(
+                    DeviceInfoService._UUID_CHARACTERISTIC_SW_REVISION),
+                'UTF-8'),
         }
 
 
@@ -123,7 +136,8 @@ class TransparentService:
             if cHandle == self.handle:
                 self.callback(data)
 
-    def __init__(self, peripheral, callback: Callable[[bytes], None]) -> None:
+    def __init__(self, peripheral: Peripheral,
+                 callback: Callable[[bytes], None]) -> None:
         try:
             service = peripheral.getServiceByUUID(self._UUID_SERVICE)
 

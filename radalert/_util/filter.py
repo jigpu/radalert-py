@@ -144,7 +144,8 @@ class IIRFilter:
         return IIRFilter(coefficient)
 
     @staticmethod
-    def create_from_decay_params(target, iterations: float) -> 'IIRFilter':
+    def create_from_decay_params(target: float,
+                                 iterations: float) -> 'IIRFilter':
         """
         Create an IIR filter with the specified decay parameters.
 

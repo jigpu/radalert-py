@@ -647,7 +647,7 @@ class RadAlertHID(generic.RadAlert):
     def _wait_for_data(self,
                        callback: Callable[[bytes], None],
                        timeout: float,
-                       sleep: float = 0.2):
+                       sleep: float = 0.2) -> bool:
         """
         Wait to recieve new data for a limited amount of time.
 

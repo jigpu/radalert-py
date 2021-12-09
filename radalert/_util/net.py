@@ -60,9 +60,9 @@ class Radmon:
         self.geiger_id: str = geiger_id
 
     def send_values(self,
-                    cpm,
-                    unixtime: float = None,
-                    latlon: Tuple[float, float] = None):
+                    cpm: float,
+                    unixtime: Optional[float] = None,
+                    latlon: Optional[Tuple[float, float]] = None) -> None:
         """
         Send the log data to the service.
         """
@@ -130,7 +130,9 @@ class URadMonitor:
             self.tube = URadMonitor._TUBE.get(tube,
                                               URadMonitor._TUBE["unknown"])
 
-    def send_values(self, cpm: float, unixtime: Optional[float] = None):
+    def send_values(self,
+                    cpm: float,
+                    unixtime: Optional[float] = None) -> None:
         if unixtime is None:
             unixtime = time.time()
 
