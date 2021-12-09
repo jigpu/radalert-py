@@ -24,6 +24,7 @@ import os
 import sys
 import time
 from threading import Thread
+from typing import List, Tuple
 
 from radalert._examples.log.logger import ConsoleLogger
 from radalert._examples.log.logger import LogBackend
@@ -37,7 +38,7 @@ from bluepy.btle import BTLEException
 from radalert.ble import RadAlertLE
 
 
-def scan(seconds):
+def scan(seconds: int) -> List[str]:
     """
     Scan for a Monitor200 geiger counter.
 
@@ -54,7 +55,7 @@ def scan(seconds):
     return results
 
 
-def find_any():
+def find_any() -> str:
     """
     Try to connect to any Monitor200 geiger counter.
 
@@ -63,13 +64,13 @@ def find_any():
     found.
     """
     print("Scanning for Mon200 devices...", file=sys.stderr)
-    addrs = []
+    addrs: List[str] = []
     while len(addrs) == 0:
         addrs = scan(3)
     return addrs[0]
 
 
-def main():
+def main() -> None:
     """
     Start the logging example.
 
@@ -89,7 +90,7 @@ def main():
     # Set up logging to the GMC.MAP service if env vars are set
     gmcmap_acct_id = os.environ.get("GMCMAP_ACCT_ID", None)
     gmcmap_gc_id = os.environ.get("GMCMAP_GC_ID", None)
-    if all(var is not None for var in [gmcmap_acct_id, gmcmap_gc_id]):
+    if gmcmap_acct_id is not None and gmcmap_gc_id is not None:
         gmc_log = GmcmapLogger(backend, gmcmap_acct_id, gmcmap_gc_id)
         gmc_thread = Thread(target=gmc_log.spin, daemon=True)
         gmc_thread.start()
@@ -97,7 +98,7 @@ def main():
     # Set up logging to the Radmon service if env vars are set
     radmon_user_id = os.environ.get("RADMON_USER_ID", None)
     radmon_data_pw = os.environ.get("RADMON_DATA_PW", None)
-    if all(var is not None for var in [radmon_user_id, radmon_data_pw]):
+    if radmon_user_id is not None and radmon_data_pw is not None:
         radmon_log = RadmonLogger(backend, radmon_user_id, radmon_data_pw)
         radmon_thread = Thread(target=radmon_log.spin, daemon=True)
         radmon_thread.start()
