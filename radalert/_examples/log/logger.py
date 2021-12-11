@@ -79,7 +79,7 @@ class ConsoleLogger:
     Periodically prints the properties tracked by the backend to the
     console.
     """
-    def __init__(self, backend: LogBackend, delay: int = 30) -> None:
+    def __init__(self, backend: LogBackend, delay: int) -> None:
         self.backend = backend
         self.delay = delay
 
@@ -163,11 +163,8 @@ class GmcmapLogger:
     """
     Simple class to take care of logging data to the GMC.MAP service.
     """
-    def __init__(self,
-                 backend: LogBackend,
-                 account_id: str,
-                 geiger_id: str,
-                 delay: int = 180) -> None:
+    def __init__(self, backend: LogBackend, account_id: str, geiger_id: str,
+                 delay: int) -> None:
         self.backend = backend
         self.Gmcmap = Gmcmap(account_id, geiger_id)
         self.delay = delay
@@ -232,11 +229,8 @@ class RadmonLogger:
     """
     Simple class to take care of logging data to the Radmon service.
     """
-    def __init__(self,
-                 backend: LogBackend,
-                 account_id: str,
-                 geiger_id: str,
-                 delay: int = 180) -> None:
+    def __init__(self, backend: LogBackend, account_id: str, geiger_id: str,
+                 delay: int) -> None:
         self.backend = backend
         self.Radmon = Radmon(account_id, geiger_id)
         self.delay = delay

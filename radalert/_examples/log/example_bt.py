@@ -83,23 +83,28 @@ def main() -> None:
     """
     backend = LogBackend()
 
-    console_log = ConsoleLogger(backend)
+    console_interval = int(os.environ.get("CONSOLE_INTERVAL", 30))
+    console_log = ConsoleLogger(backend, console_interval)
     console_thread = Thread(target=console_log.spin, daemon=True)
     console_thread.start()
 
     # Set up logging to the GMC.MAP service if env vars are set
     gmcmap_acct_id = os.environ.get("GMCMAP_ACCT_ID", None)
     gmcmap_gc_id = os.environ.get("GMCMAP_GC_ID", None)
+    gmcmap_interval = int(os.environ.get("GMCMAP_INTERVAL", 180))
     if gmcmap_acct_id is not None and gmcmap_gc_id is not None:
-        gmc_log = GmcmapLogger(backend, gmcmap_acct_id, gmcmap_gc_id)
+        gmc_log = GmcmapLogger(backend, gmcmap_acct_id, gmcmap_gc_id,
+                               gmcmap_interval)
         gmc_thread = Thread(target=gmc_log.spin, daemon=True)
         gmc_thread.start()
 
     # Set up logging to the Radmon service if env vars are set
     radmon_user_id = os.environ.get("RADMON_USER_ID", None)
     radmon_data_pw = os.environ.get("RADMON_DATA_PW", None)
+    radmon_interval = int(os.environ.get("RADMON_INTERVAL", 180))
     if radmon_user_id is not None and radmon_data_pw is not None:
-        radmon_log = RadmonLogger(backend, radmon_user_id, radmon_data_pw)
+        radmon_log = RadmonLogger(backend, radmon_user_id, radmon_data_pw,
+                                  radmon_interval)
         radmon_thread = Thread(target=radmon_log.spin, daemon=True)
         radmon_thread.start()
 
