@@ -63,6 +63,7 @@ def find_any() -> Tuple[int, int]:
     found.
     """
     print("Scanning for Mon200 devices...", file=sys.stderr)
+    iteration: int = 0
     while True:
         for d in hid.enumerate():
             vid, pid = d["vendor_id"], d["product_id"]
@@ -70,7 +71,10 @@ def find_any() -> Tuple[int, int]:
             if vid == 0x1781 and pid == 0x08e9:
                 print("Mon200 found!", file=sys.stderr)
                 return (vid, pid)
-        print("", file=sys.stderr)
+        iteration += 1
+        if iteration % 10 == 0:
+            iteration = 0
+            print(".", file=sys.stderr, end="", flush=True)
         time.sleep(1)
 
 
