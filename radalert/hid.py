@@ -588,6 +588,7 @@ class RadAlertHID(generic.RadAlert):
         """
         while True:
             iteration: int = 0
+            self._reset()
             self._start()
             while self._wait_for_data(self._on_receive, 4.0):
                 iteration += 1
