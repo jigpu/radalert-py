@@ -545,21 +545,24 @@ class RadAlertHID(generic.RadAlert):
             Callable[[RadAlertHIDStatus], None] = status_callback
         self.query_callback: \
             Callable[[RadAlertHIDQuery], None] = query_callback
-        self._hiddev = hid.device()
+        self._hiddev = None
         self._reset()
 
     def __del__(self) -> None:
         self.disconnect()
 
     def connect(self, vid: int, pid: int) -> None:
-        self.disconnect()
+        if self._hiddev is not None:
+            raise ValueError("Cannot connect to an already-connected device")
         print("Connecting...", file=sys.stderr)
+        self._hiddev = hid.device()
         self._hiddev.open(vid, pid)
 
     def disconnect(self) -> None:
         print("Disconnecting...", file=sys.stderr)
         if self._hiddev is not None:
             self._hiddev.close()
+        self._hiddev = None
         self._reset()
 
     def trigger_query(self) -> RadAlertHIDQuery:
