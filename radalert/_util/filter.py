@@ -44,10 +44,11 @@ class FIRFilter:
     the last "n" input values. The exact filtering function can
     be specified when the filter is initalized.
     """
+
     def __init__(
         self,
         size: int,
-        function: Callable[[List[float]], Optional[float]] = mean_arithmetic
+        function: Callable[[List[float]], Optional[float]] = mean_arithmetic,
     ) -> None:
         """
         Create an FIR filter with the specified size and filtering function.
@@ -97,6 +98,7 @@ class IIRFilter:
     Once constructed, you can `iterate()` the filter with input
     values and observe the filter output.
     """
+
     def __init__(self, coefficient: float) -> None:
         """
         Create an IIR filter with the specified decay coefficient.
@@ -122,7 +124,7 @@ class IIRFilter:
         return self.value
 
     @staticmethod
-    def create_from_time_constant(iterations: float) -> 'IIRFilter':
+    def create_from_time_constant(iterations: float) -> "IIRFilter":
         """
         Create an IIR filter with the specificied time-constant.
 
@@ -133,7 +135,7 @@ class IIRFilter:
         return IIRFilter(coefficient)
 
     @staticmethod
-    def create_from_half_life(iterations: float) -> 'IIRFilter':
+    def create_from_half_life(iterations: float) -> "IIRFilter":
         """
         Create an IIR filter with the specified half-life.
 
@@ -144,8 +146,7 @@ class IIRFilter:
         return IIRFilter(coefficient)
 
     @staticmethod
-    def create_from_decay_params(target: float,
-                                 iterations: float) -> 'IIRFilter':
+    def create_from_decay_params(target: float, iterations: float) -> "IIRFilter":
         """
         Create an IIR filter with the specified decay parameters.
 

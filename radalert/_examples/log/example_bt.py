@@ -93,8 +93,7 @@ def main() -> None:
     gmcmap_gc_id = os.environ.get("GMCMAP_GC_ID", None)
     gmcmap_interval = int(os.environ.get("GMCMAP_INTERVAL", 180))
     if gmcmap_acct_id is not None and gmcmap_gc_id is not None:
-        gmc_log = GmcmapLogger(backend, gmcmap_acct_id, gmcmap_gc_id,
-                               gmcmap_interval)
+        gmc_log = GmcmapLogger(backend, gmcmap_acct_id, gmcmap_gc_id, gmcmap_interval)
         gmc_thread = Thread(target=gmc_log.spin, daemon=True)
         gmc_thread.start()
 
@@ -103,14 +102,16 @@ def main() -> None:
     radmon_data_pw = os.environ.get("RADMON_DATA_PW", None)
     radmon_interval = int(os.environ.get("RADMON_INTERVAL", 180))
     if radmon_user_id is not None and radmon_data_pw is not None:
-        radmon_log = RadmonLogger(backend, radmon_user_id, radmon_data_pw,
-                                  radmon_interval)
+        radmon_log = RadmonLogger(
+            backend, radmon_user_id, radmon_data_pw, radmon_interval
+        )
         radmon_thread = Thread(target=radmon_log.spin, daemon=True)
         radmon_thread.start()
 
     # Keep attempting to reconnect if anything goes wrong
-    device = RadAlertLE(backend.radalert_status_callback,
-                        backend.radalert_query_callback)
+    device = RadAlertLE(
+        backend.radalert_status_callback, backend.radalert_query_callback
+    )
     while True:
         if len(sys.argv) == 1:
             address = find_any()

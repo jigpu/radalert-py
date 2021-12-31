@@ -26,6 +26,7 @@ class LogBackend:
 
     Keeps track of various statistics and device state for loggers.
     """
+
     def __init__(self, samples: List[int] = [10, 60, 300, 3600]) -> None:
         """
         Create a new logger with the given properties.
@@ -79,6 +80,7 @@ class ConsoleLogger:
     Periodically prints the properties tracked by the backend to the
     console.
     """
+
     def __init__(self, backend: LogBackend, delay: int) -> None:
         self.backend = backend
         self.delay = delay
@@ -96,7 +98,8 @@ class ConsoleLogger:
 
             table = [
                 f"{datetime.now().strftime('%Y-%m-%d %H:%M:%S')}",
-                f"{self.backend.battery}%", f"{self.backend.conversion}"
+                f"{self.backend.battery}%",
+                f"{self.backend.conversion}",
             ]
 
             for f in self.backend.averages:
@@ -105,10 +108,12 @@ class ConsoleLogger:
                     table.extend(["", ""])
                 else:
                     average = total / len(f.values) * 60
-                    table.extend([
-                        f"{total}",
-                        f"{average:.1f}",
-                    ])
+                    table.extend(
+                        [
+                            f"{total}",
+                            f"{average:.1f}",
+                        ]
+                    )
 
             return "\t".join(table)
         except:
@@ -130,10 +135,12 @@ class ConsoleLogger:
         table = ["time", "battery", "cpm/(mR/h)"]
         for f in self.backend.averages:
             ts = timespan(f.size)
-            table.extend([
-                f"{ts[0]:.0f}{ts[1]}-cnt",
-                f"{ts[0]:.0f}{ts[1]}-cpm",
-            ])
+            table.extend(
+                [
+                    f"{ts[0]:.0f}{ts[1]}-cnt",
+                    f"{ts[0]:.0f}{ts[1]}-cpm",
+                ]
+            )
         return "\t".join(table)
 
     def spin(self) -> None:
@@ -163,8 +170,10 @@ class GmcmapLogger:
     """
     Simple class to take care of logging data to the GMC.MAP service.
     """
-    def __init__(self, backend: LogBackend, account_id: str, geiger_id: str,
-                 delay: int) -> None:
+
+    def __init__(
+        self, backend: LogBackend, account_id: str, geiger_id: str, delay: int
+    ) -> None:
         self.backend = backend
         self.Gmcmap = Gmcmap(account_id, geiger_id)
         self.delay = delay
@@ -198,8 +207,7 @@ class GmcmapLogger:
         except Exception as e:
             print(f"Unable to send values to gmc server: {e}", file=sys.stderr)
 
-    def send_values(self, cpm: float, acpm: float,
-                    usv: Optional[float]) -> None:
+    def send_values(self, cpm: float, acpm: float, usv: Optional[float]) -> None:
         """
         Send the log data to the service.
         """
@@ -229,8 +237,10 @@ class RadmonLogger:
     """
     Simple class to take care of logging data to the Radmon service.
     """
-    def __init__(self, backend: LogBackend, account_id: str, geiger_id: str,
-                 delay: int) -> None:
+
+    def __init__(
+        self, backend: LogBackend, account_id: str, geiger_id: str, delay: int
+    ) -> None:
         self.backend = backend
         self.Radmon = Radmon(account_id, geiger_id)
         self.delay = delay
@@ -255,8 +265,7 @@ class RadmonLogger:
 
             self.send_values(avg_long)
         except Exception as e:
-            print(f"Unable to send values to radmon server: {e}",
-                  file=sys.stderr)
+            print(f"Unable to send values to radmon server: {e}", file=sys.stderr)
 
     def send_values(self, cpm: float) -> None:
         """

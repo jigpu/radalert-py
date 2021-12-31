@@ -14,6 +14,7 @@ class RadAlertStatus(metaclass=ABCMeta):
         """
         Enumeration of possible alarm states.
         """
+
         DISABLED = 1
         SET = 2
         ALERTING = 3
@@ -117,6 +118,7 @@ class RadAlertQuery(metaclass=ABCMeta):
 
     Not all fields in the query packet have been deciphered yet.
     """
+
     @abstractmethod
     def __init__(self, bytestr: bytes) -> None:
         """
@@ -259,6 +261,7 @@ class RadAlert(metaclass=ABCMeta):
     Generic client implementation for the Radiation Alert series
     of devices from SE International.
     """
+
     @abstractmethod
     def spin(self) -> NoReturn:
         """

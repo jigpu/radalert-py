@@ -28,20 +28,14 @@ class DeviceInfoService:
      * 'fw_revision':   '01040101'
      * 'sw_revision':   '0000'
     """
-    _UUID_SERVICE: str = \
-        "0000180a-0000-1000-8000-00805f9b34fb"
-    _UUID_CHARACTERISTIC_MANUFACTURER: str = \
-        "00002a29-0000-1000-8000-00805f9b34fb"
-    _UUID_CHARACTERISTIC_MODEL_NUMBER: str = \
-        "00002a24-0000-1000-8000-00805f9b34fb"
-    _UUID_CHARACTERISTIC_SERIAL_NUMBER: str = \
-        "00002a25-0000-1000-8000-00805f9b34fb"
-    _UUID_CHARACTERISTIC_HW_REVISION: str = \
-        "00002a27-0000-1000-8000-00805f9b34fb"
-    _UUID_CHARACTERISTIC_FW_REVISION: str = \
-        "00002a26-0000-1000-8000-00805f9b34fb"
-    _UUID_CHARACTERISTIC_SW_REVISION: str = \
-        "00002a28-0000-1000-8000-00805f9b34fb"
+
+    _UUID_SERVICE: str = "0000180a-0000-1000-8000-00805f9b34fb"
+    _UUID_CHARACTERISTIC_MANUFACTURER: str = "00002a29-0000-1000-8000-00805f9b34fb"
+    _UUID_CHARACTERISTIC_MODEL_NUMBER: str = "00002a24-0000-1000-8000-00805f9b34fb"
+    _UUID_CHARACTERISTIC_SERIAL_NUMBER: str = "00002a25-0000-1000-8000-00805f9b34fb"
+    _UUID_CHARACTERISTIC_HW_REVISION: str = "00002a27-0000-1000-8000-00805f9b34fb"
+    _UUID_CHARACTERISTIC_FW_REVISION: str = "00002a26-0000-1000-8000-00805f9b34fb"
+    _UUID_CHARACTERISTIC_SW_REVISION: str = "00002a28-0000-1000-8000-00805f9b34fb"
 
     def __init__(self, peripheral: Peripheral) -> None:
         try:
@@ -66,36 +60,42 @@ class DeviceInfoService:
         characteristics that do not exist.
         """
         return {
-            "manufacturer":
-            str(
+            "manufacturer": str(
                 self._read_characteristic(
-                    DeviceInfoService._UUID_CHARACTERISTIC_MANUFACTURER),
-                'UTF-8'),
-            "model_number":
-            str(
+                    DeviceInfoService._UUID_CHARACTERISTIC_MANUFACTURER
+                ),
+                "UTF-8",
+            ),
+            "model_number": str(
                 self._read_characteristic(
-                    DeviceInfoService._UUID_CHARACTERISTIC_MODEL_NUMBER),
-                'UTF-8'),
-            "serial_number":
-            str(
+                    DeviceInfoService._UUID_CHARACTERISTIC_MODEL_NUMBER
+                ),
+                "UTF-8",
+            ),
+            "serial_number": str(
                 self._read_characteristic(
-                    DeviceInfoService._UUID_CHARACTERISTIC_SERIAL_NUMBER),
-                'UTF-8'),
-            "hw_revision":
-            str(
+                    DeviceInfoService._UUID_CHARACTERISTIC_SERIAL_NUMBER
+                ),
+                "UTF-8",
+            ),
+            "hw_revision": str(
                 self._read_characteristic(
-                    DeviceInfoService._UUID_CHARACTERISTIC_HW_REVISION),
-                'UTF-8'),
-            "fw_revision":
-            str(
+                    DeviceInfoService._UUID_CHARACTERISTIC_HW_REVISION
+                ),
+                "UTF-8",
+            ),
+            "fw_revision": str(
                 self._read_characteristic(
-                    DeviceInfoService._UUID_CHARACTERISTIC_FW_REVISION),
-                'UTF-8'),
-            "sw_revision":
-            str(
+                    DeviceInfoService._UUID_CHARACTERISTIC_FW_REVISION
+                ),
+                "UTF-8",
+            ),
+            "sw_revision": str(
                 self._read_characteristic(
-                    DeviceInfoService._UUID_CHARACTERISTIC_SW_REVISION),
-                'UTF-8'),
+                    DeviceInfoService._UUID_CHARACTERISTIC_SW_REVISION
+                ),
+                "UTF-8",
+            ),
         }
 
 
@@ -116,18 +116,14 @@ class TransparentService:
     Conversely, the "TX" characteristic is what the server is sending
     to and what we receive from.
     """
-    _UUID_SERVICE: str = \
-        "49535343-FE7D-4AE5-8FA9-9FAFD205E455"
-    _UUID_CHARACTERISTIC_TX: str = \
-        "49535343-1E4D-4BD9-BA61-23C647249616"
-    _UUID_CHARACTERISTIC_RX: str = \
-        "49535343-8841-43F4-A8D4-ECBE34729BB3"
-    _UUID_DESCRIPTOR_TX: str = \
-        "00002902-0000-1000-8000-00805f9b34fb"
+
+    _UUID_SERVICE: str = "49535343-FE7D-4AE5-8FA9-9FAFD205E455"
+    _UUID_CHARACTERISTIC_TX: str = "49535343-1E4D-4BD9-BA61-23C647249616"
+    _UUID_CHARACTERISTIC_RX: str = "49535343-8841-43F4-A8D4-ECBE34729BB3"
+    _UUID_DESCRIPTOR_TX: str = "00002902-0000-1000-8000-00805f9b34fb"
 
     class _TransparentDelegate(DefaultDelegate):
-        def __init__(self, callback: Callable[[bytes], None],
-                     handle: int) -> None:
+        def __init__(self, callback: Callable[[bytes], None], handle: int) -> None:
             DefaultDelegate.__init__(self)
             self.callback = callback
             self.handle = handle
@@ -136,28 +132,31 @@ class TransparentService:
             if cHandle == self.handle:
                 self.callback(data)
 
-    def __init__(self, peripheral: Peripheral,
-                 callback: Callable[[bytes], None]) -> None:
+    def __init__(
+        self, peripheral: Peripheral, callback: Callable[[bytes], None]
+    ) -> None:
         try:
             service = peripheral.getServiceByUUID(self._UUID_SERVICE)
 
             self._char_tx = service.getCharacteristics(
-                forUUID=TransparentService._UUID_CHARACTERISTIC_TX)[0]
+                forUUID=TransparentService._UUID_CHARACTERISTIC_TX
+            )[0]
 
             self._char_rx = service.getCharacteristics(
-                forUUID=TransparentService._UUID_CHARACTERISTIC_RX)[0]
+                forUUID=TransparentService._UUID_CHARACTERISTIC_RX
+            )[0]
 
             self._desc_tx = service.getDescriptors(
-                forUUID=TransparentService._UUID_DESCRIPTOR_TX)[0]
+                forUUID=TransparentService._UUID_DESCRIPTOR_TX
+            )[0]
 
         except (BTLEException, IndexError) as e:
             raise BTLEException("Transparent UART service not found") from e
 
         # Set up the notification delegate and turn them on
-        delegate = self._TransparentDelegate(callback,
-                                             self._char_tx.getHandle())
+        delegate = self._TransparentDelegate(callback, self._char_tx.getHandle())
         peripheral.setDelegate(delegate)
-        self._desc_tx.write(b'\x01\x00')
+        self._desc_tx.write(b"\x01\x00")
 
     def send_string(self, message: str, encoding: str = "utf-8") -> None:
         """

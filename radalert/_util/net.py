@@ -17,29 +17,29 @@ class Gmcmap:
     """
     Simple class to upload logging data to the GMC.MAP service.
     """
+
     _URL: str = "http://www.GMCmap.com/log2.asp?"
 
     def __init__(self, account_id: str, geiger_id: str) -> None:
         self.account_id: str = account_id
         self.geiger_id: str = geiger_id
 
-    def send_values(self,
-                    cpm: Optional[float] = None,
-                    acpm: Optional[float] = None,
-                    usv: Optional[float] = None) -> None:
+    def send_values(
+        self,
+        cpm: Optional[float] = None,
+        acpm: Optional[float] = None,
+        usv: Optional[float] = None,
+    ) -> None:
         """
         Send the log data to the service.
         """
-        params: Dict[str, str] = {
-            'AID': self.account_id,
-            'GID': self.geiger_id
-        }
+        params: Dict[str, str] = {"AID": self.account_id, "GID": self.geiger_id}
         if cpm is not None:
-            params['CPM'] = f'{cpm:.2f}'
+            params["CPM"] = f"{cpm:.2f}"
         if acpm is not None:
-            params['ACPM'] = f'{acpm:.2f}'
+            params["ACPM"] = f"{acpm:.2f}"
         if usv is not None:
-            params['uSV'] = f'{usv:.5f}'
+            params["uSV"] = f"{usv:.5f}"
 
         getdata = urlencode(params)
         urlopen(Gmcmap._URL + getdata).read()
@@ -59,26 +59,28 @@ class Radmon:
         self.account_id: str = account_id
         self.geiger_id: str = geiger_id
 
-    def send_values(self,
-                    cpm: float,
-                    unixtime: Optional[float] = None,
-                    latlon: Optional[Tuple[float, float]] = None) -> None:
+    def send_values(
+        self,
+        cpm: float,
+        unixtime: Optional[float] = None,
+        latlon: Optional[Tuple[float, float]] = None,
+    ) -> None:
         """
         Send the log data to the service.
         """
         params: Dict[str, str] = {
-            'function': 'submit',
-            'user': self.account_id,
-            'password': self.geiger_id,
-            'value': f'{cpm:.2f}',
-            'unit': 'CPM',
+            "function": "submit",
+            "user": self.account_id,
+            "password": self.geiger_id,
+            "value": f"{cpm:.2f}",
+            "unit": "CPM",
         }
         if unixtime is not None:
-            params['datetime'] = f'{int(time.time())}'
+            params["datetime"] = f"{int(time.time())}"
         if latlon is not None:
-            params['function'] = 'submitwithlatlng'
-            params['latitude'] = f'{latlon[0]}'
-            params['longitude'] = f'{latlon[1]}'
+            params["function"] = "submitwithlatlng"
+            params["latitude"] = f"{latlon[0]}"
+            params["longitude"] = f"{latlon[1]}"
 
         getdata = urlencode(params)
         urlopen(Radmon._URL + getdata).read()
@@ -112,13 +114,15 @@ class URadMonitor:
     }
     # yapf: enable
 
-    def __init__(self,
-                 user_id: str,
-                 user_hash: str,
-                 device_id: str,
-                 hwver: Optional[str] = None,
-                 fwver: Optional[str] = None,
-                 tube: Optional[str] = None):
+    def __init__(
+        self,
+        user_id: str,
+        user_hash: str,
+        device_id: str,
+        hwver: Optional[str] = None,
+        fwver: Optional[str] = None,
+        tube: Optional[str] = None,
+    ):
         self.user_id: str = user_id
         self.user_hash: str = user_hash
         self.device_id: str = device_id
@@ -127,12 +131,9 @@ class URadMonitor:
         if tube is None:
             self.tube = URadMonitor._TUBE["unknown"]
         else:
-            self.tube = URadMonitor._TUBE.get(tube,
-                                              URadMonitor._TUBE["unknown"])
+            self.tube = URadMonitor._TUBE.get(tube, URadMonitor._TUBE["unknown"])
 
-    def send_values(self,
-                    cpm: float,
-                    unixtime: Optional[float] = None) -> None:
+    def send_values(self, cpm: float, unixtime: Optional[float] = None) -> None:
         if unixtime is None:
             unixtime = time.time()
 
@@ -151,9 +152,9 @@ class URadMonitor:
         # yapf: enable
 
         if self.hwver is not None:
-            params[URadMonitor._PARAM['hwver']] = self.hwver
+            params[URadMonitor._PARAM["hwver"]] = self.hwver
         if self.fwver is not None:
-            params[URadMonitor._PARAM['fwver']] = self.fwver
+            params[URadMonitor._PARAM["fwver"]] = self.fwver
 
         restful_path = URadMonitor._restful_encode(params)
         urlopen(Request(Radmon._URL + restful_path, headers=headers)).read()
@@ -163,7 +164,7 @@ class URadMonitor:
         path = ""
         for k, v in params.items():
             path += "/"
-            path += quote(f'{k}')
+            path += quote(f"{k}")
             path += "/"
             path += quote(v)
         return path

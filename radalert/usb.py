@@ -28,6 +28,7 @@ class RadAlertUSBStatus(generic.RadAlertStatus):
 
     Not all fields in the status packet have been deciphered yet.
     """
+
     # yapf: disable
     _MODE_DISPLAY_INFO: Dict[int, Tuple[str, Callable[[float], float]]] = {
         0:  ("cpm",    lambda x: x),       # CPM -> CPM
@@ -43,8 +44,7 @@ class RadAlertUSBStatus(generic.RadAlertStatus):
         """
         Create a status object from a bytes object.
         """
-        self._data: Dict[str, Union[int, bool]] = \
-            RadAlertUSBStatus.unpack(bytestr)
+        self._data: Dict[str, Union[int, bool]] = RadAlertUSBStatus.unpack(bytestr)
         self.type: str = "status"
 
     @property
@@ -160,8 +160,7 @@ class RadAlertUSBStatus(generic.RadAlertStatus):
             # safe, lets assume it does. Maximum CPS specs are 7500 for
             # the 1000EC, 5000 for the Ranger, and 3923 for the Monitor
             # 200.
-            raise ValueError(
-                f'cps = {data["cps"]} is unreasonably large or negative')
+            raise ValueError(f'cps = {data["cps"]} is unreasonably large or negative')
 
         if data["mode"] not in RadAlertUSBStatus._MODE_DISPLAY_INFO:
             raise ValueError(f'mode = {data["mode"]} is not a known state')
@@ -173,12 +172,12 @@ class RadAlertUSBQuery(generic.RadAlertQuery):
 
     Not all fields in the query packet have been deciphered yet.
     """
+
     def __init__(self, bytestr: bytes) -> None:
         """
         Create a status object from a bytes object.
         """
-        self._data: Dict[str, Union[str, int,
-                                    bool]] = RadAlertUSBQuery.unpack(bytestr)
+        self._data: Dict[str, Union[str, int, bool]] = RadAlertUSBQuery.unpack(bytestr)
         self.type: str = "query"
 
     @property
@@ -236,8 +235,10 @@ class RadAlertUSBQuery(generic.RadAlertQuery):
         """
         default_cal_date = datetime.datetime(2000, 1, 1)
         calibration_date = datetime.datetime(
-            int(self._data["year"]) + 2000, int(self._data["month"]),
-            int(self._data["day"]))
+            int(self._data["year"]) + 2000,
+            int(self._data["month"]),
+            int(self._data["day"]),
+        )
         if calibration_date == default_cal_date:
             return None
         else:
@@ -301,7 +302,7 @@ class RadAlertUSBQuery(generic.RadAlertQuery):
         """
         Serial number of the device.
         """
-        return int(str(self._data["serial"]).lstrip('\x00'))
+        return int(str(self._data["serial"]).lstrip("\x00"))
 
     @property
     def _unknown(self) -> List[Tuple[int, int]]:
@@ -354,10 +355,11 @@ class RadAlertUSBQuery(generic.RadAlertQuery):
 
     @staticmethod
     def _unpack_to_dict(
-            fieldspec: List[Tuple[str, int, str]],
-            bytestr: bytes,
-            alignment: str = '',
-            x_as_unknown: bool = False) -> Dict[str, Union[str, int, bool]]:
+        fieldspec: List[Tuple[str, int, str]],
+        bytestr: bytes,
+        alignment: str = "",
+        x_as_unknown: bool = False,
+    ) -> Dict[str, Union[str, int, bool]]:
         """
         Helper method to unpack a byte string into a dictionary.
 
@@ -369,15 +371,15 @@ class RadAlertUSBQuery(generic.RadAlertQuery):
         field_names = []
 
         for name, repeat, fmt in fieldspec:
-            if x_as_unknown and fmt == 'x':
-                fmt = 'B'
+            if x_as_unknown and fmt == "x":
+                fmt = "B"
 
             format_str = format_str + str(repeat) + fmt
 
-            if fmt == 'x':
+            if fmt == "x":
                 continue
 
-            if fmt == 's':
+            if fmt == "s":
                 field_names.append(name)
             else:
                 for i in range(0, repeat):
@@ -453,7 +455,7 @@ class RadAlertUSBQuery(generic.RadAlertQuery):
             ("unkG",     11, "x"),          # Unknown:              ff ff ff ff ff ff ff ff ff ff ff
         ]
         # yapf: enable
-        data = RadAlertUSBQuery._unpack_to_dict(fields, bytestr, '<', True)
+        data = RadAlertUSBQuery._unpack_to_dict(fields, bytestr, "<", True)
 
         # Unpack the status byte into its individual fields
         status: int = int(data["status"])
@@ -478,8 +480,8 @@ class RadAlertUSBQuery(generic.RadAlertQuery):
         """
         Check that the unpacked dictionary data is reasonable.
         """
-        #serial: str = str(data["serial"])
-        #if not bool(re.match("^\x00*[0-9]+$", serial)):
+        # serial: str = str(data["serial"])
+        # if not bool(re.match("^\x00*[0-9]+$", serial)):
         #    raise ValueError(f'serial = {data["serial"]} has invalid format')
 
         alarm: int = int(data["alarm"])
@@ -494,8 +496,7 @@ class RadAlertUSBQuery(generic.RadAlertQuery):
         # TODO: What is maximum contrast?
         contrast: int = int(data["contrast"])
         if contrast > 64 or contrast < 0:
-            raise ValueError(f'contrast = {data["contrast"]} '
-                             'outside expected range')
+            raise ValueError(f'contrast = {data["contrast"]} ' "outside expected range")
 
         dead: int = int(data["dead"])
         if dead == 0:
@@ -503,15 +504,17 @@ class RadAlertUSBQuery(generic.RadAlertQuery):
 
         count_duration: int = int(data["count_duration"])
         if count_duration >= 24 * 60 * 60 or count_duration < 1:
-            raise ValueError(f'count_duration = {data["count_duration"]} '
-                             'outside expected range')
+            raise ValueError(
+                f'count_duration = {data["count_duration"]} ' "outside expected range"
+            )
 
         # TODO: What is maximum backlight duration?
         backlight_duration: int = int(data["backlight_duration"])
         if backlight_duration > 30 or backlight_duration < 0:
             raise ValueError(
                 f'backlight_duration = {data["backlight_duration"]} '
-                'outside expected range')
+                "outside expected range"
+            )
 
         conv: int = int(data["conv"])
         if conv > 7000 or conv < 200:
@@ -520,8 +523,10 @@ class RadAlertUSBQuery(generic.RadAlertQuery):
         # TODO: What is maximum datalog interval?
         datalog_interval: int = int(data["datalog_interval"])
         if datalog_interval > 60 or datalog_interval < 1:
-            raise ValueError(f'datalog_interval = {data["datalog_interval"]} '
-                             'outside expected range')
+            raise ValueError(
+                f'datalog_interval = {data["datalog_interval"]} '
+                "outside expected range"
+            )
 
 
 class RadAlertUSB(generic.RadAlert):
@@ -529,8 +534,9 @@ class RadAlertUSB(generic.RadAlert):
     USB HID client implementation for the Radiation Alert series
     of devices from SE International.
     """
-    _ACK = b'\x00\x00\x00\x00\x00\x00\x00\x00'
-    _START = b'\x46\x00\x00\x00\x00\x00\x00\x00'
+
+    _ACK = b"\x00\x00\x00\x00\x00\x00\x00\x00"
+    _START = b"\x46\x00\x00\x00\x00\x00\x00\x00"
     _HID_REQUEST_GET_REPORT = 0x01
     _HID_REQUEST_SET_IDLE = 0x0A
     _HID_FEATURE_REPORT = 0x03
@@ -544,20 +550,21 @@ class RadAlertUSB(generic.RadAlert):
 
     def _reset(self) -> None:
         self._command_buffer: List[Tuple[int, int]] = []
-        self._receive_buffer: bytes = b''
-        self._poll_buffer: bytes = b''
+        self._receive_buffer: bytes = b""
+        self._poll_buffer: bytes = b""
         self._last_id: Optional[int] = None
         self._sync_count: int = 0
         if self._usbdev is not None:
             self._usbdev.resetDevice()
-            RadAlertUSB._set_idle(self._usbdev)        
+            RadAlertUSB._set_idle(self._usbdev)
 
-    def __init__(self, status_callback: Callable[[RadAlertUSBStatus], None],
-                 query_callback: Callable[[RadAlertUSBQuery], None]) -> None:
-        self.status_callback: \
-            Callable[[RadAlertUSBStatus], None] = status_callback
-        self.query_callback: \
-            Callable[[RadAlertUSBQuery], None] = query_callback
+    def __init__(
+        self,
+        status_callback: Callable[[RadAlertUSBStatus], None],
+        query_callback: Callable[[RadAlertUSBQuery], None],
+    ) -> None:
+        self.status_callback: Callable[[RadAlertUSBStatus], None] = status_callback
+        self.query_callback: Callable[[RadAlertUSBQuery], None] = query_callback
         self._usbdev = None
         self._reset()
 
@@ -595,13 +602,17 @@ class RadAlertUSB(generic.RadAlert):
         course of keeping the connection alive / current, but this method
         can be used to force an update.
         """
-        bmRequestType = usb1.TYPE_CLASS | usb1.RECIPIENT_INTERFACE # 0x21
+        bmRequestType = usb1.TYPE_CLASS | usb1.RECIPIENT_INTERFACE  # 0x21
         bRequest = RadAlertUSB._HID_REQUEST_GET_REPORT
-        wValue = (RadAlertUSB._HID_FEATURE_REPORT << 8) | RadAlertUSB._DEVICE_REPORT_ID_QUERY
+        wValue = (
+            RadAlertUSB._HID_FEATURE_REPORT << 8
+        ) | RadAlertUSB._DEVICE_REPORT_ID_QUERY
         wIndex = 0
         wLength = 64
         assert self._usbdev is not None
-        query = bytes(self._usbdev.controlRead(bmRequestType, bRequest, wValue, wIndex, wLength))
+        query = bytes(
+            self._usbdev.controlRead(bmRequestType, bRequest, wValue, wIndex, wLength)
+        )
         return RadAlertUSBQuery(query)
 
     def spin(self) -> NoReturn:
@@ -630,18 +641,18 @@ class RadAlertUSB(generic.RadAlert):
     def _decode(self) -> Optional[RadAlertUSBStatus]:
         if len(self._receive_buffer) != 15:
             return None
-        #print(f'Decoding {self._receive_buffer.hex()}', file=sys.stderr)
+        # print(f'Decoding {self._receive_buffer.hex()}', file=sys.stderr)
         data: RadAlertUSBStatus = RadAlertUSBStatus(self._receive_buffer)
 
         if self._last_id is not None:
             if (self._last_id + 1) % 256 != data.id:
                 last_id: int = self._last_id
                 self._last_id = None
-                raise ValueError(f'Packet ID jump: {last_id} to {data.id}')
+                raise ValueError(f"Packet ID jump: {last_id} to {data.id}")
 
         self._last_id = data.id
 
-        #for value, expect in data._unknown:
+        # for value, expect in data._unknown:
         #    if value != expect:
         #        print(
         #            f'NOTE: Data parsed from {self._receive_buffer.hex()}'
@@ -649,23 +660,36 @@ class RadAlertUSB(generic.RadAlert):
         #            f' {data._unknown}',
         #            file=sys.stderr)
 
-        self._receive_buffer = b''
-        #print(data._data)
+        self._receive_buffer = b""
+        # print(data._data)
         return data
 
     @staticmethod
     def _set_idle(usbdev):
-        bmRequestType = usb1.TYPE_CLASS | usb1.RECIPIENT_INTERFACE # 0x21
+        bmRequestType = usb1.TYPE_CLASS | usb1.RECIPIENT_INTERFACE  # 0x21
         bRequest = RadAlertUSB._HID_REQUEST_SET_IDLE
-        wValue = (RadAlertUSB._DEVICE_REPORT_ID_DATA << 8) | (RadAlertUSB._HID_IDLE_RATE_INFINITE)
+        wValue = (RadAlertUSB._DEVICE_REPORT_ID_DATA << 8) | (
+            RadAlertUSB._HID_IDLE_RATE_INFINITE
+        )
         wIndex = 0
         data = bytes()
         assert usbdev is not None
-        usbdev.controlWrite(bmRequestType, bRequest, wValue, wIndex, data, timeout = RadAlertUSB._DEVICE_TIMEOUT)
+        usbdev.controlWrite(
+            bmRequestType,
+            bRequest,
+            wValue,
+            wIndex,
+            data,
+            timeout=RadAlertUSB._DEVICE_TIMEOUT,
+        )
 
     def _start(self) -> None:
         assert self._usbdev is not None
-        self._usbdev.interruptWrite(RadAlertUSB._DEVICE_ENDPOINT, RadAlertUSB._START, RadAlertUSB._DEVICE_TIMEOUT)
+        self._usbdev.interruptWrite(
+            RadAlertUSB._DEVICE_ENDPOINT,
+            RadAlertUSB._START,
+            RadAlertUSB._DEVICE_TIMEOUT,
+        )
 
     def _poll(self) -> Optional[bytes]:
         """
@@ -682,7 +706,11 @@ class RadAlertUSB(generic.RadAlert):
         """
         assert self._usbdev is not None
         try:
-            bytestr = bytes(self._usbdev.interruptRead(RadAlertUSB._DEVICE_ENDPOINT, 25, RadAlertUSB._DEVICE_TIMEOUT))
+            bytestr = bytes(
+                self._usbdev.interruptRead(
+                    RadAlertUSB._DEVICE_ENDPOINT, 25, RadAlertUSB._DEVICE_TIMEOUT
+                )
+            )
         except:
             return None
         if bytestr == self._poll_buffer:
@@ -690,10 +718,9 @@ class RadAlertUSB(generic.RadAlert):
         self._poll_buffer = bytestr
         return bytestr
 
-    def _wait_for_data(self,
-                       callback: Callable[[bytes], None],
-                       timeout: float,
-                       sleep: float = 0.2) -> bool:
+    def _wait_for_data(
+        self, callback: Callable[[bytes], None], timeout: float, sleep: float = 0.2
+    ) -> bool:
         """
         Wait to recieve new data for a limited amount of time.
 
@@ -715,14 +742,14 @@ class RadAlertUSB(generic.RadAlert):
     def _on_receive(self, bytestr: bytes) -> None:
         self._receive_buffer = bytestr
         self._process()
-        #while len(self._command_buffer) > 0:
+        # while len(self._command_buffer) > 0:
         #    message = self._command_buffer.pop(0)
         #    self._send_command(message)
 
     def _process(self) -> None:
         self._synchronize()
         while self._synchronized():
-            #print(f'Processing {self._receive_buffer.hex()}', file=sys.stderr)
+            # print(f'Processing {self._receive_buffer.hex()}', file=sys.stderr)
             try:
                 data = self._decode()
                 if data is None:
@@ -731,14 +758,16 @@ class RadAlertUSB(generic.RadAlert):
                 self.status_callback(data)
             except Exception as e:
                 print(
-                    "Failed to parse from:"
-                    f"{self._receive_buffer.hex()}\n{e}",
-                    file=sys.stderr)
+                    "Failed to parse from:" f"{self._receive_buffer.hex()}\n{e}",
+                    file=sys.stderr,
+                )
                 self._desynchronize()
 
     def _send_ack(self) -> None:
         assert self._usbdev is not None
-        self._usbdev.interruptWrite(RadAlertUSB._DEVICE_ENDPOINT, RadAlertUSB._ACK, RadAlertUSB._DEVICE_TIMEOUT)
+        self._usbdev.interruptWrite(
+            RadAlertUSB._DEVICE_ENDPOINT, RadAlertUSB._ACK, RadAlertUSB._DEVICE_TIMEOUT
+        )
 
     def _synchronize(self) -> None:
         """
@@ -750,7 +779,7 @@ class RadAlertUSB(generic.RadAlert):
         decode the data.
         """
         while not self._synchronized():
-            #print(f'Synchronizing {self._receive_buffer.hex()}', file=sys.stderr)
+            # print(f'Synchronizing {self._receive_buffer.hex()}', file=sys.stderr)
             try:
                 if self._decode() is None:
                     break
