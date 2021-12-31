@@ -129,7 +129,8 @@ def main() -> None:
             print(f"Connecting to {vid}:{pid}", file=sys.stderr)
             device.connect(vid, pid)
         except Exception as e:
-            print("Failure: {}".format(e), file=sys.stderr)
+            device.disconnect()
+            traceback.print_exc()
             continue
         print(f"Sampling from {vid}:{pid}", file=sys.stderr)
         spin(device)
