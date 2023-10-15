@@ -74,6 +74,63 @@ KERNEL=="hidraw*", ATTRS{idVendor}=="1781", ATTRS{idProduct}=="08e9", MODE="666"
 SUBSYSTEM=="usb", ATTR{idVendor}=="1781", ATTR{idProduct}=="08e9", MODE="666"
 ~~~
 
+
+## Installation
+The example programs may be installed if desired. Doing so will allow
+them to be used directly, without having to worry about setting up
+the `PYTHONPATH`. Installation can be performed with eitehr the "pip"
+or "pipx" tools.
+
+### Non-root installation
+This is preferred if possible, since it does not carry any chance of
+breaking your system-installed packages. It does not, however, work
+for all use-cases.
+
+**Install:**
+
+    $ pipx install .
+    $ pipx ensurepath
+
+**Usage:**
+
+    $ radmon-usb
+
+**Uninstall:**
+
+    $ pipx uninstall radalert
+
+### Root installation
+This method will install the examples as system binaries under the
+`/usr/bin` directory. This can be (slightly) dangerous because it
+may potentially overwrite system-installed files. It is, however,
+necessary for the systemd examples (see `radmon/_examples/systemd`)
+to work as expected.
+
+Note that "pip" may error out when running as root since it does
+not want to accidentally break your system. You may need to add
+the `--break-system-packages` command-line option to notify it
+that you are aware of the dangers.
+
+**Install:**
+
+    $ sudo pip install .
+
+**Usage:**
+
+    $ radmon-usb
+
+**Uninstall:**
+
+    $ sudo pip uninstall .
+
+### Wheel Creation
+It is also possible to create a "wheel" package that can then later
+be installed and uninstalled with "pip". This may be preferred in
+some cases.
+
+    $ python -m pip wheel --no-deps .
+
+
 ## Open Items
 
 The following is a list of things that could be worked on in the
