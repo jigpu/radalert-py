@@ -1,0 +1,9 @@
+[Unit]
+Description=Radalert Daemon
+After=network.target
+
+[Service]
+Type=simple
+ExecStart=python3 -u /usr/bin/radalert-usb
+EnvironmentFile=-/etc/default/radalert
+DynamicUser=yes

@@ -1,0 +1,43 @@
+# Environment variables controlling the operation of radalert-py suite
+# of example logging utilities (e.g. radalert-usb, radalert-hid, and
+# radapert-bt).
+#
+
+# Rate at which updates will be posted to the system log, in seconds.
+CONSOLE_INTERVAL=300
+
+# Rate at which updates will be posted to the gmcmap.org service, in
+# seconds.
+GMCMAP_INTERVAL=180
+
+# User account ID for automatically submitting data to the gmcmap.com
+# service. See http://gmcmap.com/AutomaticallySubmitData.asp for more
+# information.
+#
+# May be left blank if logging to this service is not desired.
+GMCMAP_ACCT_ID=
+
+# Geiger counter ID for automatically submitting data to the gmcmap.com
+# service. See http://gmcmap.com/AutomaticallySubmitData.asp for more
+# information.
+#
+# May be left blank if logging to this service is not desired.
+GMCMAP_GC_ID=
+
+# Rate at which updates will be posted to the radmon.org service, in
+# seconds.
+RADMON_INTERVAL=180
+
+# Station name / username for automatically submitting data to the
+# radmon.org service. See https://radmon.org/index.php/register
+# for more information.
+#
+# May be left blank if logging to this service is not desired.
+RADMON_USER_ID=
+
+# Data sending password for automatically submitting data to the
+# radmon.org service. See https://radmon.org/index.php/register
+# for more information.
+#
+# May be left blank if logging to this service is not desired.
+RADMON_DATA_PW=
